@@ -20644,31 +20644,18 @@ function setHelpTips(on) {
 
 // ─── HAPTICS ───
 // ═══════════════════════════════════════════════
-// HAPTICS
-// ─────────────────────────────────────────────
-// Browser: uses navigator.vibrate (Android Chrome only — iOS ignores silently).
-// Capacitor: swap the body of haptic() for @capacitor/haptics calls, e.g.:
-//   import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
-//   light   → Haptics.impact({ style: ImpactStyle.Light })
-//   medium  → Haptics.impact({ style: ImpactStyle.Medium })
-//   heavy   → Haptics.impact({ style: ImpactStyle.Heavy })
-//   success → Haptics.notification({ type: NotificationType.Success })
-//   warning → Haptics.notification({ type: NotificationType.Warning })
-//   error   → Haptics.notification({ type: NotificationType.Error })
-//   select  → Haptics.selectionChanged()
+// HAPTICS — Capacitor native implementation
+// Uses window.Haptics / window.ImpactStyle / window.NotificationType
+// injected by main.iife.js (built from main.js via Vite).
+// Falls back silently if not running in Capacitor context.
 // ═══════════════════════════════════════════════
-function haptic(pattern) {
-  if (!progState.hapticsOn) return;
-  try { navigator.vibrate && navigator.vibrate(pattern); } catch(e) {}
-}
-// Named helpers — map cleanly to Capacitor ImpactStyle / NotificationType
-function hapticLight()   { haptic(6);  }          // piano key, minor UI tap
-function hapticMedium()  { haptic(12); }           // octave shift, mode switch
-function hapticSelect()  { haptic(8);  }           // toggle, mic on/off
-function hapticSuccess() { haptic([10, 50, 10]); } // in-tune, correct answer
-function hapticWrong()   { haptic([20, 40, 20]); } // wrong answer
-function hapticCorrect() { hapticSuccess(); }      // alias used by existing call sites
-function hapticBeat(isAccent) { haptic(isAccent ? 22 : 10); }
+async function hapticLight()   { if (!progState.hapticsOn) return; try { await window.Haptics.impact({ style: window.ImpactStyle.Light }); } catch(e) {} }
+async function hapticMedium()  { if (!progState.hapticsOn) return; try { await window.Haptics.impact({ style: window.ImpactStyle.Medium }); } catch(e) {} }
+async function hapticSelect()  { if (!progState.hapticsOn) return; try { await window.Haptics.selectionChanged(); } catch(e) {} }
+async function hapticSuccess() { if (!progState.hapticsOn) return; try { await window.Haptics.notification({ type: window.NotificationType.Success }); } catch(e) {} }
+async function hapticWrong()   { if (!progState.hapticsOn) return; try { await window.Haptics.notification({ type: window.NotificationType.Error }); } catch(e) {} }
+function hapticCorrect() { hapticSuccess(); }
+async function hapticBeat(isAccent) { if (!progState.hapticsOn) return; try { await window.Haptics.impact({ style: isAccent ? window.ImpactStyle.Heavy : window.ImpactStyle.Light }); } catch(e) {} }
 
 function setHaptics(on) {
   progState.hapticsOn = !!on;
