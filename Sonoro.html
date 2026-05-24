@@ -10003,25 +10003,8 @@
     <div style="font-size:10px;color:var(--muted);margin-top:5px">Vibrate on beats &amp; correct answers. Metronome silent mode is in the METRO tab.</div>
 
     <div class="sm-section-title" style="margin-top:14px">Audio Cues</div>
-    <div style="font-size:10px;color:var(--muted);margin-bottom:10px">Selecting a sound previews it with its haptic.</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-      <div>
-        <div style="font-size:9px;letter-spacing:.1em;color:var(--muted);margin-bottom:3px">CORRECT</div>
-        <select id="cueSelect_correct" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 7px;cursor:pointer"></select>
-      </div>
-      <div>
-        <div style="font-size:9px;letter-spacing:.1em;color:var(--muted);margin-bottom:3px">WRONG</div>
-        <select id="cueSelect_wrong" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 7px;cursor:pointer"></select>
-      </div>
-      <div>
-        <div style="font-size:9px;letter-spacing:.1em;color:var(--muted);margin-bottom:3px">STREAK</div>
-        <select id="cueSelect_milestone" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 7px;cursor:pointer"></select>
-      </div>
-      <div>
-        <div style="font-size:9px;letter-spacing:.1em;color:var(--muted);margin-bottom:3px">LEVEL UP</div>
-        <select id="cueSelect_levelup" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 7px;cursor:pointer"></select>
-      </div>
-    </div>
+    <div style="font-size:10px;color:var(--muted);margin-bottom:10px">Tap cell to cycle · ▶ to replay</div>
+    <div id="cuePickerWrap"></div>
 
     <div class="sm-section-title" data-i18n="settings_latency">Latency Measurement</div>
     <div class="sm-calib-hint" id="latHintText" style="margin-bottom:10px">Tap the button each time you <em>hear</em> the click. The ball hits the line exactly when audio is scheduled — the gap between visual and what you hear is your device's audio delay.</div>
@@ -20719,40 +20702,80 @@ function playCueMilestone() { const k=progState.audioCues?.milestone; if(k==='fa
 function playCueLevelUp()   { const k=progState.audioCues?.levelup;   if(k==='gameboy')_cueLevelUpGameboy(); else if(k==='orchestral')_cueLevelUpOrchestral(); else if(k==='swell')_cueLevelUpSwell(); }
 
 // Set choice, save, re-render, preview
-function setCueChoice(event, key) {
-  if (!progState.audioCues) progState.audioCues = {};
-  progState.audioCues[event] = key;
-  progSave();
-  renderCueDropdowns();
-  if (event==='correct')   { hapticCorrect(); playCueCorrect(); }
+// ── AUDIO CUE PICKER ─────────────────────────────────────────────────────────
+const _CUE_DEFS = {
+  correct:   { label:'CORRECT',  def:'chime',   opts:[{k:'chime',l:'Chime Tick'},{k:'blip',l:'Soft Blip'},{k:'piano',l:'Piano Key'},{k:'silent',l:'Silent'}] },
+  wrong:     { label:'WRONG',    def:'buzz',    opts:[{k:'buzz',l:'Buzz Buzz'},{k:'thud',l:'Low Thud'},{k:'clunk',l:'Dissonant Clunk'},{k:'silent',l:'Silent'}] },
+  milestone: { label:'STREAK',   def:'fanfare', opts:[{k:'fanfare',l:'Fanfare'},{k:'coin',l:'Coin Shimmer'},{k:'brass',l:'Brass Stab'},{k:'silent',l:'Silent'}] },
+  levelup:   { label:'LEVEL UP', def:'gameboy', opts:[{k:'gameboy',l:'Gameboy'},{k:'orchestral',l:'Orchestral'},{k:'swell',l:'Chime Swell'},{k:'silent',l:'Silent'}] },
+};
+
+function _cuePreview(event) {
+  if (event==='correct')        { hapticCorrect(); playCueCorrect(); }
   else if (event==='wrong')     { hapticWrong(); playCueWrong(); }
   else if (event==='milestone') { hapticMilestone(); playCueMilestone(); }
   else if (event==='levelup')   { hapticLevelUp(); playCueLevelUp(); }
 }
 
-// Render compact 2x2 dropdowns in settings
-function renderCueDropdowns() {
+function setCueChoice(event, key) {
+  if (!progState.audioCues) progState.audioCues = {};
+  progState.audioCues[event] = key;
+  progSave();
+  renderCueDropdowns();
+  _cuePreview(event);
+}
+
+function _cueCycle(event) {
+  const def = _CUE_DEFS[event];
   const c = progState.audioCues || {};
-  const rows = [
-    { event:'correct',   options:[{k:'chime',l:'Chime Tick'},{k:'blip',l:'Soft Blip'},{k:'piano',l:'Piano Key'},{k:'silent',l:'Silent'}] },
-    { event:'wrong',     options:[{k:'buzz',l:'Buzz Buzz'},{k:'thud',l:'Low Thud'},{k:'clunk',l:'Dissonant Clunk'},{k:'silent',l:'Silent'}] },
-    { event:'milestone', options:[{k:'fanfare',l:'Fanfare'},{k:'coin',l:'Coin Shimmer'},{k:'brass',l:'Brass Stab'},{k:'silent',l:'Silent'}] },
-    { event:'levelup',   options:[{k:'gameboy',l:'Gameboy'},{k:'orchestral',l:'Orchestral'},{k:'swell',l:'Chime Swell'},{k:'silent',l:'Silent'}] },
-  ];
-  rows.forEach(({ event, options }) => {
-    const sel = document.getElementById('cueSelect_' + event);
-    if (!sel) return;
-    const def = {correct:'chime',wrong:'buzz',milestone:'fanfare',levelup:'gameboy'}[event];
+  const current = c[event] || def.def;
+  const idx = def.opts.findIndex(o => o.k === current);
+  const next = def.opts[(idx + 1) % def.opts.length].k;
+  setCueChoice(event, next);
+}
+
+function renderCueDropdowns() {
+  const wrap = document.getElementById('cuePickerWrap');
+  if (!wrap) return;
+  const c = progState.audioCues || {};
+  wrap.innerHTML = '';
+
+  // 2x2 grid
+  const grid = document.createElement('div');
+  grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px';
+
+  Object.entries(_CUE_DEFS).forEach(([event, { label, def, opts }]) => {
     const current = c[event] || def;
-    sel.innerHTML = '';
-    options.forEach(({ k, l }) => {
-      const opt = document.createElement('option');
-      opt.value = k; opt.textContent = l;
-      if (k === current) opt.selected = true;
-      sel.appendChild(opt);
-    });
-    sel.onchange = () => setCueChoice(event, sel.value);
+    const currentLabel = opts.find(o => o.k === current)?.l || current;
+
+    const cell = document.createElement('div');
+    cell.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;cursor:pointer;display:flex;flex-direction:column;gap:3px;position:relative;';
+    cell.onclick = () => _cueCycle(event);
+
+    const lbl = document.createElement('div');
+    lbl.style.cssText = 'font-size:8px;letter-spacing:.12em;color:var(--muted);';
+    lbl.textContent = label;
+
+    const bottom = document.createElement('div');
+    bottom.style.cssText = 'display:flex;align-items:center;justify-content:space-between;';
+
+    const val = document.createElement('div');
+    val.style.cssText = 'font-size:10px;letter-spacing:.04em;color:var(--accent);font-family:"JetBrains Mono",monospace;';
+    val.textContent = currentLabel;
+
+    const play = document.createElement('button');
+    play.style.cssText = 'background:none;border:none;color:var(--muted);font-size:10px;cursor:pointer;padding:2px 4px;line-height:1;';
+    play.textContent = '▶';
+    play.onclick = (e) => { e.stopPropagation(); _cuePreview(event); };
+
+    bottom.appendChild(val);
+    bottom.appendChild(play);
+    cell.appendChild(lbl);
+    cell.appendChild(bottom);
+    grid.appendChild(cell);
   });
+
+  wrap.appendChild(grid);
 }
 
 // ─── HAPTICS ───
