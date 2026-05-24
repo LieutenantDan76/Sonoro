@@ -20651,62 +20651,63 @@ function setHelpTips(on) {
 // ═══════════════════════════════════════════════
 // Short synthesized sounds paired with key haptic moments.
 // All built with Web Audio API — no files needed.
+// Uses Sonoro's proven buildLimiterChain pattern — same as piano/ref tones.
 // ═══════════════════════════════════════════════
-// Reuse Sonoro's existing shared audio context — already unlocked by user interaction
-function _cueCtx() {
+function _cueNote(freq, type, when, dur, vol) {
   const ctx = getAudio();
-  console.log('[Sonoro] _cueCtx state:', ctx.state, 'time:', ctx.currentTime);
-  return ctx;
-}
-function _cueTone(ctx, freq, type, start, dur, gain, pitchEnd) {
+  const chain = buildLimiterChain(ctx, 0.5);
   const osc = ctx.createOscillator();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, when);
   const g = ctx.createGain();
-  osc.type = type; osc.frequency.setValueAtTime(freq, start);
-  if (pitchEnd) osc.frequency.exponentialRampToValueAtTime(pitchEnd, start + dur);
-  g.gain.setValueAtTime(0, start);
-  g.gain.linearRampToValueAtTime(gain, start + 0.005);
-  g.gain.exponentialRampToValueAtTime(0.001, start + dur);
-  osc.connect(g); g.connect(ctx.destination);
-  osc.start(start); osc.stop(start + dur + 0.05);
-}
-function _cueNoise(ctx, start, dur, cutoff, gain) {
-  const buf = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * dur), ctx.sampleRate);
-  const d = buf.getChannelData(0);
-  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-  const src = ctx.createBufferSource(); src.buffer = buf;
-  const filt = ctx.createBiquadFilter(); filt.type = 'lowpass'; filt.frequency.value = cutoff;
-  const g = ctx.createGain();
-  g.gain.setValueAtTime(gain, start); g.gain.exponentialRampToValueAtTime(0.001, start + dur);
-  src.connect(filt); filt.connect(g); g.connect(ctx.destination);
-  src.start(start); src.stop(start + dur);
+  g.gain.setValueAtTime(0, when);
+  g.gain.linearRampToValueAtTime(vol, when + 0.008);
+  g.gain.exponentialRampToValueAtTime(0.001, when + dur);
+  osc.connect(g); g.connect(chain.gain);
+  osc.start(when); osc.stop(when + dur + 0.05);
 }
 // B · Chime Tick — two-note chime, light then bright
 function playCueCorrect() {
-  const ctx = _cueCtx(); const now = ctx.currentTime;
-  _cueTone(ctx, 523, 'triangle', now, 0.08, 0.15);
-  _cueTone(ctx, 784, 'sine', now + 0.035, 0.2, 0.2);
-  _cueTone(ctx, 1568, 'sine', now + 0.035, 0.12, 0.07);
+  const now = getAudio().currentTime;
+  _cueNote(523, 'triangle', now, 0.1, 0.22);
+  _cueNote(784, 'sine', now + 0.04, 0.25, 0.28);
+  _cueNote(1568, 'sine', now + 0.04, 0.15, 0.1);
 }
-// B · Descending Buzz — pitch drops slowly twice
+// B · Descending Buzz — two low sawtooth notes, slow and ominous
 function playCueWrong() {
-  const ctx = _cueCtx(); const now = ctx.currentTime;
-  _cueTone(ctx, 260, 'sawtooth', now, 0.14, 0.18, 110);
-  _cueTone(ctx, 260, 'sawtooth', now + 0.19, 0.14, 0.18, 110);
+  const ctx = getAudio(); const now = ctx.currentTime;
+  // Two descending buzzes using pitch ramp
+  const chain1 = buildLimiterChain(ctx, 0.4);
+  const osc1 = ctx.createOscillator(); osc1.type = 'sawtooth';
+  osc1.frequency.setValueAtTime(260, now);
+  osc1.frequency.exponentialRampToValueAtTime(110, now + 0.18);
+  const g1 = ctx.createGain();
+  g1.gain.setValueAtTime(0.22, now); g1.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+  osc1.connect(g1); g1.connect(chain1.gain);
+  osc1.start(now); osc1.stop(now + 0.2);
+  const chain2 = buildLimiterChain(ctx, 0.4);
+  const osc2 = ctx.createOscillator(); osc2.type = 'sawtooth';
+  osc2.frequency.setValueAtTime(260, now + 0.22);
+  osc2.frequency.exponentialRampToValueAtTime(110, now + 0.4);
+  const g2 = ctx.createGain();
+  g2.gain.setValueAtTime(0.22, now + 0.22); g2.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+  osc2.connect(g2); g2.connect(chain2.gain);
+  osc2.start(now + 0.22); osc2.stop(now + 0.42);
 }
 // A · Ascending Fanfare — three notes building up
 function playCueMilestone() {
-  const ctx = _cueCtx(); const now = ctx.currentTime;
-  _cueTone(ctx, 392, 'triangle', now, 0.14, 0.18);
-  _cueTone(ctx, 523, 'triangle', now + 0.14, 0.14, 0.22);
-  _cueTone(ctx, 659, 'triangle', now + 0.28, 0.35, 0.26);
-  _cueTone(ctx, 659 * 1.5, 'sine', now + 0.28, 0.25, 0.1);
+  const now = getAudio().currentTime;
+  _cueNote(392, 'triangle', now, 0.18, 0.2);
+  _cueNote(523, 'triangle', now + 0.16, 0.18, 0.24);
+  _cueNote(659, 'triangle', now + 0.32, 0.4, 0.28);
+  _cueNote(988, 'sine', now + 0.32, 0.3, 0.12);
 }
 // A · Gameboy Firework — square wave arp burst, pause, second burst
 function playCueLevelUp() {
-  const ctx = _cueCtx(); const now = ctx.currentTime;
-  [[261,0],[329,0.055],[392,0.11],[523,0.165]].forEach(([f,t]) => _cueTone(ctx, f, 'square', now+t, 0.08, 0.16));
-  [[523,0],[659,0.05],[784,0.1],[1047,0.15]].forEach(([f,t]) => _cueTone(ctx, f, 'square', now+0.28+t, 0.1, 0.16));
-  _cueTone(ctx, 1047, 'sine', now + 0.5, 0.4, 0.1);
+  const now = getAudio().currentTime;
+  [[261,0],[329,0.055],[392,0.11],[523,0.165]].forEach(([f,t]) => _cueNote(f, 'square', now+t, 0.1, 0.18));
+  [[523,0],[659,0.05],[784,0.1],[1047,0.15]].forEach(([f,t]) => _cueNote(f, 'square', now+0.3+t, 0.12, 0.18));
+  _cueNote(1047, 'sine', now + 0.52, 0.45, 0.12);
 }
 
 // ─── HAPTICS ───
