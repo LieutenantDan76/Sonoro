@@ -10001,6 +10001,12 @@
       </button>
     </div>
     <div style="font-size:10px;color:var(--muted);margin-top:5px">Vibrate on beats &amp; correct answers. Metronome silent mode is in the METRO tab.</div>
+    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+      <button onclick="hapticCorrect()" style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer">TEST CORRECT</button>
+      <button onclick="hapticWrong()" style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer">TEST WRONG</button>
+      <button onclick="hapticMilestone()" style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer">TEST STREAK</button>
+      <button onclick="hapticLevelUp()" style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer">TEST LEVEL UP</button>
+    </div>
 
     <div class="sm-section-title" data-i18n="settings_latency">Latency Measurement</div>
     <div class="sm-calib-hint" id="latHintText" style="margin-bottom:10px">Tap the button each time you <em>hear</em> the click. The ball hits the line exactly when audio is scheduled — the gap between visual and what you hear is your device's audio delay.</div>
@@ -20655,7 +20661,8 @@ async function hapticSuccess() { if (!progState.hapticsOn) return; try { await w
 // Wrong — Heavy stumble then Light, feels like "oops"
 async function hapticWrong()   { if (!progState.hapticsOn) return; try { await window.Haptics.impact({ style: window.ImpactStyle.Heavy }); await new Promise(r => setTimeout(r, 50)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); } catch(e) {} }
 // Correct answer — distinct notification Success pulse, separate from in-tune ping
-async function hapticCorrect() { if (!progState.hapticsOn) return; try { await window.Haptics.notification({ type: window.NotificationType.Success }); } catch(e) {} }
+// Correct answer — Medium + Light, clearly distinct from in-tune double Light tap
+async function hapticCorrect() { if (!progState.hapticsOn) return; try { await window.Haptics.impact({ style: window.ImpactStyle.Medium }); await new Promise(r => setTimeout(r, 50)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); } catch(e) {} }
 // Level up — fireworks: big bang, shimmer, second burst, fade
 async function hapticLevelUp() { if (!progState.hapticsOn) return; try { await window.Haptics.impact({ style: window.ImpactStyle.Heavy }); await new Promise(r => setTimeout(r, 60)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); await new Promise(r => setTimeout(r, 30)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); await new Promise(r => setTimeout(r, 80)); await window.Haptics.impact({ style: window.ImpactStyle.Heavy }); await new Promise(r => setTimeout(r, 40)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); await new Promise(r => setTimeout(r, 25)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); } catch(e) {} }
 // Streak milestone — trumpet "doo doo dooo" + firework burst
