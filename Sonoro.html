@@ -20652,8 +20652,12 @@ function setHelpTips(on) {
 // Short synthesized sounds paired with key haptic moments.
 // All built with Web Audio API — no files needed.
 // ═══════════════════════════════════════════════
-// Audio cue context — reuses Sonoro's shared AudioContext (already unlocked)
-function _cueCtx() { return getAudio(); }
+// Reuse Sonoro's existing shared audio context — already unlocked by user interaction
+function _cueCtx() {
+  const ctx = getAudio();
+  console.log('[Sonoro] _cueCtx state:', ctx.state, 'time:', ctx.currentTime);
+  return ctx;
+}
 function _cueTone(ctx, freq, type, start, dur, gain, pitchEnd) {
   const osc = ctx.createOscillator();
   const g = ctx.createGain();
