@@ -5269,7 +5269,7 @@
   }
   .lat-apply-btn { border-color: var(--in-tune); color: var(--in-tune); }
 
-
+  .sm-action-btn {
     width: 100%;
     padding: 12px;
     background: var(--panel);
@@ -9947,10 +9947,10 @@
     <div class="sm-section-title" data-i18n="settings_lang">Language</div>
     <div class="lang-chip-row" id="smLangRow">
       <button class="lang-chip active" id="langChip_en" data-value="en" onclick="setLang('en')">
-        <span class="lang-flag">🇬🇧</span><span class="lang-code">EN</span>
+        <span class="lang-flag"><svg width="18" height="12" viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="40" fill="#012169"/><path d="M0,0 L60,40 M60,0 L0,40" stroke="#fff" stroke-width="8"/><path d="M0,0 L60,40 M60,0 L0,40" stroke="#C8102E" stroke-width="5"/><path d="M30,0 V40 M0,20 H60" stroke="#fff" stroke-width="12"/><path d="M30,0 V40 M0,20 H60" stroke="#C8102E" stroke-width="8"/></svg></span><span class="lang-code">EN</span>
       </button>
       <button class="lang-chip" id="langChip_it" data-value="it" onclick="setLang('it')">
-        <span class="lang-flag">🇮🇹</span><span class="lang-code">IT</span>
+        <span class="lang-flag"><svg width="18" height="12" viewBox="0 0 30 20" xmlns="http://www.w3.org/2000/svg"><rect width="10" height="20" fill="#009246"/><rect x="10" width="10" height="20" fill="#fff"/><rect x="20" width="10" height="20" fill="#CE2B37"/></svg></span><span class="lang-code">IT</span>
       </button>
     </div>
 
@@ -20675,39 +20675,241 @@ function _cueSweep(freqStart, freqEnd, type, when, dur, vol) {
 }
 
 // ── CORRECT ──
-function _cueCorrectChime() { const n=getAudio().currentTime; _cueNote(523,'triangle',n,0.1,0.22); _cueNote(784,'sine',n+0.04,0.25,0.28); _cueNote(1568,'sine',n+0.04,0.15,0.1); }
-function _cueCorrectBlip()  { const n=getAudio().currentTime; _cueNote(440,'sine',n,0.06,0.2); _cueNote(660,'sine',n+0.04,0.15,0.24); }
-function _cueCorrectPiano() { const n=getAudio().currentTime; _cueNote(523,'sine',n,0.35,0.28); _cueNote(523,'triangle',n,0.2,0.12); _cueNote(1046,'sine',n,0.15,0.08); }
+function _cueCorrectChime()   { const n=getAudio().currentTime; _cueNote(523,'triangle',n,0.1,0.22); _cueNote(784,'sine',n+0.04,0.25,0.28); _cueNote(1568,'sine',n+0.04,0.15,0.1); }
+function _cueCorrectBlip()    { const n=getAudio().currentTime; _cueNote(440,'sine',n,0.06,0.2); _cueNote(660,'sine',n+0.04,0.15,0.24); }
+function _cueCorrectPiano()   { const n=getAudio().currentTime; _cueNote(523,'sine',n,0.35,0.28); _cueNote(523,'triangle',n,0.2,0.12); _cueNote(1046,'sine',n,0.15,0.08); }
+// Marimba: warm mallet attack with natural decay — very music-app appropriate
+// Marimba: woody mallet — sharp transient attack, quick body decay, long ring
+// Uses inharmonic partials (3.78x, 6.1x) to get that hollow tube resonance
+// Marimba: double hit game show bell — two strikes, second slightly higher (classic "ding ding!")
+function _cueCorrectMarimba() {
+  const ctx = getAudio(); const n = ctx.currentTime;
+  const strike = (when, freq, vol) => {
+    const chain = buildLimiterChain(ctx, 0.5);
+    const osc = ctx.createOscillator(); osc.type = 'sine'; osc.frequency.value = freq;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(vol, when);
+    g.gain.exponentialRampToValueAtTime(vol * 0.5, when + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, when + 0.5);
+    osc.connect(g); g.connect(chain.gain); osc.start(when); osc.stop(when + 0.55);
+    // Inharmonic click transient
+    const click = ctx.createOscillator(); click.type = 'triangle'; click.frequency.value = freq * 3.78;
+    const gc = ctx.createGain();
+    gc.gain.setValueAtTime(vol * 0.55, when); gc.gain.exponentialRampToValueAtTime(0.001, when + 0.025);
+    click.connect(gc); gc.connect(chain.gain); click.start(when); click.stop(when + 0.03);
+  };
+  strike(n, 523, 0.32);        // first hit — C5
+  strike(n + 0.18, 659, 0.28); // second hit — E5, slightly higher, classic bell bounce
+}
+// Harp pluck: triangle with characteristic fast attack, long shimmery decay
+function _cueCorrectHarp()    { const n=getAudio().currentTime; _cueNote(659,'triangle',n,0.5,0.24); _cueNote(784,'triangle',n+0.06,0.45,0.18); _cueNote(988,'sine',n+0.12,0.4,0.14); _cueNote(1319,'sine',n+0.18,0.35,0.1); }
 
 // ── WRONG ──
 function _cueWrongBuzz()  { const n=getAudio().currentTime; _cueSweep(260,110,'sawtooth',n,0.18,0.22); _cueSweep(260,110,'sawtooth',n+0.22,0.18,0.22); }
 function _cueWrongThud()  { const n=getAudio().currentTime; _cueSweep(120,55,'sine',n,0.2,0.3); _cueNote(80,'sine',n,0.25,0.2); }
-// Clunk: mid-high dissonant cluster — two sawtooth waves a semitone apart, cuts through
 function _cueWrongClunk() { const n=getAudio().currentTime; _cueNote(466,'sawtooth',n,0.18,0.28); _cueNote(493,'sawtooth',n,0.18,0.24); _cueNote(233,'sine',n,0.2,0.18); }
+// Trombone: cartoon WOMP WOMP — first slide goes UP briefly then DOWN (the classic arc), second drops lower
+function _cueWrongTrombone() {
+  const ctx = getAudio(); const n = ctx.currentTime;
+  const tbone = (startT, startF, peakF, endF, dur, vol) => {
+    const chain = buildLimiterChain(ctx, 0.48);
+    [0, 12].forEach(detuneCents => {
+      const o = ctx.createOscillator(); o.type = 'sawtooth';
+      o.detune.value = detuneCents;
+      o.frequency.setValueAtTime(startF, startT);
+      o.frequency.exponentialRampToValueAtTime(peakF, startT + dur * 0.2); // up
+      o.frequency.exponentialRampToValueAtTime(endF, startT + dur);         // then down
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0, startT);
+      g.gain.linearRampToValueAtTime(vol, startT + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, startT + dur + 0.05);
+      o.connect(g); g.connect(chain.gain); o.start(startT); o.stop(startT + dur + 0.1);
+    });
+  };
+  tbone(n,      220, 280, 140, 0.45, 0.18); // WOM — starts mid, bumps up, slides way down
+  tbone(n+0.42, 175, 210, 100, 0.5,  0.16); // WOMP — starts lower, same arc, ends even lower
+}
+// Glass knock: high sine, very fast decay — delicate "no" tap
+function _cueWrongGlass()    { const n=getAudio().currentTime; _cueNote(1760,'sine',n,0.08,0.28); _cueNote(2637,'sine',n,0.06,0.18); _cueNote(880,'triangle',n,0.1,0.15); }
 
 // ── MILESTONE ──
-function _cueMilestoneFanfare() { const n=getAudio().currentTime; _cueNote(392,'triangle',n,0.18,0.2); _cueNote(523,'triangle',n+0.16,0.18,0.24); _cueNote(659,'triangle',n+0.32,0.4,0.28); _cueNote(988,'sine',n+0.32,0.3,0.12); }
-function _cueMilestoneCoin()    { const n=getAudio().currentTime; _cueNote(880,'square',n,0.07,0.2); _cueNote(1175,'square',n+0.08,0.07,0.2); _cueNote(1760,'sine',n+0.16,0.3,0.15); _cueNote(3520,'sine',n+0.16,0.2,0.06); }
-function _cueMilestoneBrass()   { const n=getAudio().currentTime; _cueNote(220,'sawtooth',n,0.15,0.18); _cueNote(330,'sawtooth',n,0.15,0.14); _cueNote(440,'sawtooth',n,0.15,0.1); _cueNote(660,'sine',n+0.12,0.25,0.18); }
+function _cueMilestoneFanfare()  { const n=getAudio().currentTime; _cueNote(392,'triangle',n,0.18,0.2); _cueNote(523,'triangle',n+0.16,0.18,0.24); _cueNote(659,'triangle',n+0.32,0.4,0.28); _cueNote(988,'sine',n+0.32,0.3,0.12); }
+function _cueMilestoneCoin()     { const n=getAudio().currentTime; _cueNote(880,'square',n,0.07,0.2); _cueNote(1175,'square',n+0.08,0.07,0.2); _cueNote(1760,'sine',n+0.16,0.3,0.15); _cueNote(3520,'sine',n+0.16,0.2,0.06); }
+// Brass Stab: royal herald "DUN DUN DUUUUN" — two punchy stabs then held chord
+function _cueMilestoneBrass() {
+  const ctx = getAudio(); const n = ctx.currentTime;
+  const playBrass = (when, dur, vol, freqs) => {
+    const chain = buildLimiterChain(ctx, 0.45);
+    freqs.forEach(f => {
+      const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0, when);
+      g.gain.linearRampToValueAtTime(vol, when + 0.015);
+      g.gain.setValueAtTime(vol * 0.8, when + dur - 0.05);
+      g.gain.exponentialRampToValueAtTime(0.001, when + dur);
+      o.connect(g); g.connect(chain.gain); o.start(when); o.stop(when + dur + 0.05);
+    });
+  };
+  playBrass(n,        0.12, 0.09, [261, 392, 523]);   // DUN
+  playBrass(n + 0.18, 0.12, 0.1,  [293, 440, 587]);   // DUN
+  playBrass(n + 0.36, 0.55, 0.11, [329, 494, 659]);   // DUUUUN
+}
+// Bell chord: three stacked sines, resonant and ceremonial
+function _cueMilestoneBell()     { const n=getAudio().currentTime; _cueNote(523,'sine',n,0.8,0.2); _cueNote(659,'sine',n,0.75,0.16); _cueNote(784,'sine',n,0.7,0.13); _cueNote(1046,'sine',n+0.05,0.6,0.1); }
+// Drum Roll: proper snare roll (prrrr) then big crack — like a game show reveal
+// Drum Roll: TA TA TA   TA — snappier spacing, warm snare body
+function _cueMilestoneDrumroll() {
+  const ctx = getAudio(); const n = ctx.currentTime;
+  // Single drummer hit — full layered snare sound
+  const singleHit = (when, vol, dur, freqMult=1.0) => {
+    const chain = buildLimiterChain(ctx, 0.4);
+    const baseFreq = 180 * freqMult;
+    const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = baseFreq;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(vol * 0.7, when);
+    g.gain.exponentialRampToValueAtTime(vol * 0.25, when + 0.025);
+    g.gain.exponentialRampToValueAtTime(0.001, when + dur * 1.6);
+    o.connect(g); g.connect(chain.gain); o.start(when); o.stop(when + dur * 1.7);
+    const o2 = ctx.createOscillator(); o2.type = 'triangle'; o2.frequency.value = baseFreq * 1.22;
+    const g2 = ctx.createGain();
+    g2.gain.setValueAtTime(vol * 0.45, when); g2.gain.exponentialRampToValueAtTime(0.001, when + dur * 1.1);
+    o2.connect(g2); g2.connect(chain.gain); o2.start(when); o2.stop(when + dur * 1.2);
+    const o3 = ctx.createOscillator(); o3.type = 'sine'; o3.frequency.value = baseFreq * 0.5;
+    const g3 = ctx.createGain();
+    g3.gain.setValueAtTime(vol * 0.35, when); g3.gain.exponentialRampToValueAtTime(0.001, when + dur * 0.9);
+    o3.connect(g3); g3.connect(chain.gain); o3.start(when); o3.stop(when + dur);
+    const buf = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * dur), ctx.sampleRate);
+    const d = buf.getChannelData(0); for (let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+    const src = ctx.createBufferSource(); src.buffer = buf;
+    const filt = ctx.createBiquadFilter(); filt.type='bandpass'; filt.frequency.value=3500; filt.Q.value=0.7;
+    const gn = ctx.createGain();
+    gn.gain.setValueAtTime(vol * 0.55, when); gn.gain.exponentialRampToValueAtTime(0.001, when + dur * 0.7);
+    src.connect(filt); filt.connect(gn); gn.connect(chain.gain); src.start(when); src.stop(when + dur + 0.01);
+  };
+  // Drumline section — 4 drummers with slight timing and tuning offsets
+  // Offsets in ms, freq multipliers simulate different drum tunings
+  // 10 drummers — varied timing (0-28ms), tuning (±8%), and volume
+  // Spread creates natural flamming, tuning spread = different drum sizes in the section
+  const drummers = [
+    { dt: 0.000, freqMult: 1.00, volMult: 1.00 },  // leader, dead on
+    { dt: 0.004, freqMult: 0.98, volMult: 0.88 },
+    { dt: 0.007, freqMult: 1.04, volMult: 0.84 },
+    { dt: 0.010, freqMult: 0.95, volMult: 0.80 },
+    { dt: 0.013, freqMult: 1.02, volMult: 0.76 },
+    { dt: 0.016, freqMult: 0.93, volMult: 0.72 },
+    { dt: 0.019, freqMult: 1.06, volMult: 0.68 },
+    { dt: 0.022, freqMult: 0.97, volMult: 0.64 },
+    { dt: 0.025, freqMult: 1.08, volMult: 0.60 },
+    { dt: 0.028, freqMult: 0.91, volMult: 0.55 },  // back of the section, slightly late
+  ];
+  const hit = (when, vol, dur=0.055) => {
+    drummers.forEach(({ dt, freqMult, volMult }) => {
+      singleHit(when + dt, vol * volMult, dur, freqMult);
+    });
+  };
+  // SHHHUH → TA  TA  TA  (pause)  TA!
+  // Pre-roll: rising noise swell — 200ms buildup, the "readying the sticks" moment
+  // Pre-roll: snare wire buzz — tight resonant filters, bleeds into first hit
+  const preBuf = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * 0.30), ctx.sampleRate);
+  const preD = preBuf.getChannelData(0); for (let i=0;i<preD.length;i++) preD[i]=Math.random()*2-1;
+  // Layer 1: tight snare wire resonance — the main buzz character
+  const preChain1 = buildLimiterChain(ctx, 0.44);
+  const preSrc1 = ctx.createBufferSource(); preSrc1.buffer = preBuf;
+  const preFilt1 = ctx.createBiquadFilter(); preFilt1.type='bandpass'; preFilt1.frequency.value=300; preFilt1.Q.value=2.5;
+  const preG1 = ctx.createGain();
+  preG1.gain.setValueAtTime(0.0, n);
+  preG1.gain.linearRampToValueAtTime(0.08, n + 0.07);
+  preG1.gain.linearRampToValueAtTime(0.32, n + 0.18);
+  preG1.gain.linearRampToValueAtTime(0.38, n + 0.22);
+  preG1.gain.exponentialRampToValueAtTime(0.001, n + 0.36); // bleeds well past hit start
+  preSrc1.connect(preFilt1); preFilt1.connect(preG1); preG1.connect(preChain1.gain);
+  preSrc1.start(n); preSrc1.stop(n + 0.37);
+  // Layer 2: secondary wire harmonic for texture
+  const preChain2 = buildLimiterChain(ctx, 0.34);
+  const preSrc2 = ctx.createBufferSource(); preSrc2.buffer = preBuf;
+  const preFilt2 = ctx.createBiquadFilter(); preFilt2.type='bandpass'; preFilt2.frequency.value=600; preFilt2.Q.value=3.0;
+  const preG2 = ctx.createGain();
+  preG2.gain.setValueAtTime(0.0, n);
+  preG2.gain.linearRampToValueAtTime(0.04, n + 0.09);
+  preG2.gain.linearRampToValueAtTime(0.18, n + 0.20);
+  preG2.gain.exponentialRampToValueAtTime(0.001, n + 0.32);
+  preSrc2.connect(preFilt2); preFilt2.connect(preG2); preG2.connect(preChain2.gain);
+  preSrc2.start(n); preSrc2.stop(n + 0.33);
+  // The hits — pre-roll bleeds into first TA naturally
+  hit(n + 0.22, 0.20);   // TA — overlaps with pre-roll peak
+  hit(n + 0.37, 0.23);   // TA
+  hit(n + 0.52, 0.26);   // TA
+  // pause...
+  hit(n + 0.74, 0.38, 0.07);  // TA! final crack
+  const boom = buildLimiterChain(ctx, 0.5);
+  const bo = ctx.createOscillator(); bo.type = 'sine';
+  bo.frequency.setValueAtTime(110, n+0.74); bo.frequency.exponentialRampToValueAtTime(55, n+0.94);
+  const bg = ctx.createGain(); bg.gain.setValueAtTime(0.2, n+0.74); bg.gain.exponentialRampToValueAtTime(0.001, n+1.04);
+  bo.connect(bg); bg.connect(boom.gain); bo.start(n+0.74); bo.stop(n+1.08);
+}
 
 // ── LEVEL UP ──
 function _cueLevelUpGameboy()    { const n=getAudio().currentTime; [[261,0],[329,.055],[392,.11],[523,.165]].forEach(([f,t])=>_cueNote(f,'square',n+t,0.1,0.18)); [[523,0],[659,.05],[784,.1],[1047,.15]].forEach(([f,t])=>_cueNote(f,'square',n+.3+t,0.12,0.18)); _cueNote(1047,'sine',n+.52,0.45,0.12); }
 function _cueLevelUpOrchestral() { const n=getAudio().currentTime; [261,329,392].forEach(f=>_cueNote(f,'triangle',n,0.25,0.15)); _cueNote(784,'sine',n,0.2,0.1); _cueNote(1568,'sine',n+0.1,0.15,0.07); [392,523,659].forEach(f=>_cueNote(f,'triangle',n+0.32,0.38,0.15)); _cueNote(1319,'sine',n+0.32,0.3,0.08); }
 function _cueLevelUpSwell()      { const n=getAudio().currentTime; [261,329,392].forEach((f,i)=>{_cueNote(f,'sine',n+i*.09,0.5-i*.1,0.2);_cueNote(f*2,'sine',n+i*.09,0.3,0.07);}); [523,659,784,1047].forEach((f,i)=>{_cueNote(f,'sine',n+.35+i*.08,0.45-i*.08,0.18);_cueNote(f*2,'sine',n+.35+i*.08,0.25,0.06);}); }
+// Power up: ascending square wave sweep — pure classic video game energy
+function _cueLevelUpPowerUp()    { const n=getAudio().currentTime; _cueSweep(220,880,'square',n,0.4,0.2); _cueSweep(220,880,'square',n+0.01,0.4,0.15); _cueNote(880,'sine',n+0.38,0.3,0.15); }
+// Harp Cascade: descend then ascend glissando — cinematic sweep
+function _cueLevelUpHarp() { const n=getAudio().currentTime; [1047,880,784,659,523,392,329,261].forEach((f,i)=>_cueNote(f,'triangle',n+i*.04,0.35,0.14)); [329,392,523,659,784,880,1047,1319].forEach((f,i)=>_cueNote(f,'sine',n+0.38+i*.045,0.4,0.13)); }
+// Treasure!: Zelda chest stinger homage — da da da DAAAA
+// F major 2nd inversion (C F A) moving up chromatically, 8-bit square waves
+// Bass starts on C5 (523.25Hz). Three staccato stabs then held final chord.
+// C5-F5-A5 → C#5-F#5-A#5 → D5-G5-B5 → D#5-G#5-C6 (held)
+function _cueLevelUpZelda() {
+  const ctx = getAudio(); const n = ctx.currentTime;
+  // F major 2nd inversion intervals from bass: root, maj3rd up, maj6th up
+  const triad = (bass) => [bass, bass * (4/3), bass * (5/3)]; // C F A ratios
+  const stab = (when, bass, dur, vol, held=false) => {
+    const chain = buildLimiterChain(ctx, 0.46);
+    triad(bass).forEach((freq, i) => {
+      const o = ctx.createOscillator(); o.type = 'square'; // 8-bit!
+      o.frequency.value = freq;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0, when);
+      g.gain.linearRampToValueAtTime((vol - i*0.025), when + 0.008);
+      if (held) {
+        g.gain.setValueAtTime((vol - i*0.025) * 0.85, when + dur - 0.15);
+        g.gain.exponentialRampToValueAtTime(0.001, when + dur);
+      } else {
+        g.gain.exponentialRampToValueAtTime(0.001, when + dur);
+      }
+      o.connect(g); g.connect(chain.gain); o.start(when); o.stop(when + dur + 0.05);
+    });
+  };
+  stab(n + 0.00, 523.25, 0.11, 0.13);          // DA  — C5 F5 A5
+  stab(n + 0.16, 554.37, 0.11, 0.14);          // DA  — C#5 F#5 A#5
+  stab(n + 0.32, 587.33, 0.11, 0.15);          // DA  — D5 G5 B5
+  stab(n + 0.50, 622.25, 0.70, 0.11, true);    // DAAAA — D#5 G#5 C6, held
+  // Shimmer overtones on final chord
+  const shimChain = buildLimiterChain(ctx, 0.32);
+  [622.25, 1244.5, 1866.75].forEach((freq, i) => {
+    const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = freq;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, n+0.50);
+    g.gain.linearRampToValueAtTime(0.07 - i*0.02, n+0.52);
+    g.gain.exponentialRampToValueAtTime(0.001, n+1.18);
+    o.connect(g); g.connect(shimChain.gain); o.start(n+0.50); o.stop(n+1.22);
+  });
+}
 
 // ── DISPATCHERS ──
-function playCueCorrect()   { const k=progState.audioCues?.correct;   if(k==='chime')_cueCorrectChime(); else if(k==='blip')_cueCorrectBlip(); else if(k==='piano')_cueCorrectPiano(); }
-function playCueWrong()     { const k=progState.audioCues?.wrong;     if(k==='buzz')_cueWrongBuzz(); else if(k==='thud')_cueWrongThud(); else if(k==='clunk')_cueWrongClunk(); }
-function playCueMilestone() { const k=progState.audioCues?.milestone; if(k==='fanfare')_cueMilestoneFanfare(); else if(k==='coin')_cueMilestoneCoin(); else if(k==='brass')_cueMilestoneBrass(); }
-function playCueLevelUp()   { const k=progState.audioCues?.levelup;   if(k==='gameboy')_cueLevelUpGameboy(); else if(k==='orchestral')_cueLevelUpOrchestral(); else if(k==='swell')_cueLevelUpSwell(); }
+function playCueCorrect()   { const k=progState.audioCues?.correct;   if(k==='chime')_cueCorrectChime(); else if(k==='blip')_cueCorrectBlip(); else if(k==='piano')_cueCorrectPiano(); else if(k==='marimba')_cueCorrectMarimba(); else if(k==='harp')_cueCorrectHarp(); }
+function playCueWrong()     { const k=progState.audioCues?.wrong;     if(k==='buzz')_cueWrongBuzz(); else if(k==='thud')_cueWrongThud(); else if(k==='clunk')_cueWrongClunk(); else if(k==='trombone')_cueWrongTrombone(); else if(k==='glass')_cueWrongGlass(); }
+function playCueMilestone() { const k=progState.audioCues?.milestone; if(k==='fanfare')_cueMilestoneFanfare(); else if(k==='coin')_cueMilestoneCoin(); else if(k==='brass')_cueMilestoneBrass(); else if(k==='bell')_cueMilestoneBell(); else if(k==='drumroll')_cueMilestoneDrumroll(); }
+function playCueLevelUp()   { const k=progState.audioCues?.levelup;   if(k==='gameboy')_cueLevelUpGameboy(); else if(k==='orchestral')_cueLevelUpOrchestral(); else if(k==='swell')_cueLevelUpSwell(); else if(k==='powerup')_cueLevelUpPowerUp(); else if(k==='harp')_cueLevelUpHarp(); else if(k==='zelda')_cueLevelUpZelda(); }
 
 // Set choice, save, re-render, preview
 // ── AUDIO CUE PICKER ─────────────────────────────────────────────────────────
 const _CUE_DEFS = {
-  correct:   { label:'CORRECT',  def:'chime',   opts:[{k:'chime',l:'Chime Tick'},{k:'blip',l:'Soft Blip'},{k:'piano',l:'Piano Key'},{k:'silent',l:'Silent'}] },
-  wrong:     { label:'WRONG',    def:'buzz',    opts:[{k:'buzz',l:'Buzz Buzz'},{k:'thud',l:'Low Thud'},{k:'clunk',l:'Dissonant Clunk'},{k:'silent',l:'Silent'}] },
-  milestone: { label:'STREAK',   def:'fanfare', opts:[{k:'fanfare',l:'Fanfare'},{k:'coin',l:'Coin Shimmer'},{k:'brass',l:'Brass Stab'},{k:'silent',l:'Silent'}] },
-  levelup:   { label:'LEVEL UP', def:'gameboy', opts:[{k:'gameboy',l:'Gameboy'},{k:'orchestral',l:'Orchestral'},{k:'swell',l:'Chime Swell'},{k:'silent',l:'Silent'}] },
+  correct:   { label:'CORRECT',  def:'chime',   opts:[{k:'chime',l:'Chime Tick'},{k:'blip',l:'Soft Blip'},{k:'piano',l:'Piano Key'},{k:'marimba',l:'Marimba'},{k:'harp',l:'Harp Pluck'},{k:'silent',l:'Silent'}] },
+  wrong:     { label:'WRONG',    def:'buzz',    opts:[{k:'buzz',l:'Buzz Buzz'},{k:'thud',l:'Low Thud'},{k:'clunk',l:'Dissonant Clunk'},{k:'trombone',l:'Trombone Wah'},{k:'glass',l:'Glass Knock'},{k:'silent',l:'Silent'}] },
+  milestone: { label:'STREAK',   def:'fanfare', opts:[{k:'fanfare',l:'Fanfare'},{k:'coin',l:'Coin Shimmer'},{k:'brass',l:'Brass Stab'},{k:'bell',l:'Bell Chord'},{k:'drumroll',l:'Drum Roll'},{k:'silent',l:'Silent'}] },
+  levelup:   { label:'LEVEL UP', def:'gameboy', opts:[{k:'gameboy',l:'Gameboy'},{k:'orchestral',l:'Orchestral'},{k:'swell',l:'Chime Swell'},{k:'powerup',l:'Power Up'},{k:'harp',l:'Harp Cascade'},{k:'zelda',l:'Treasure!'},{k:'silent',l:'Silent'}] },
 };
 
 function _cuePreview(event) {
