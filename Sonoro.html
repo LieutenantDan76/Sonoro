@@ -14588,7 +14588,6 @@ let _pressTimer = null;
 function progCellPointerDown(e, barIdx, blockIdx) {
   _pressTimer = setTimeout(() => {
     _pressTimer = null;
-    if (typeof hapticLight === 'function') hapticLight();
     progOpenVoicing(barIdx, blockIdx, e);
   }, 500);
 }
@@ -15014,7 +15013,6 @@ function progStampBar(barIdx) {
   bar.push(progBlock('chord', progRoot, progQuality, dur));
   progActivePreset = null;
   progUpdatePresetLabel();
-  if (typeof hapticLight === 'function') hapticLight();
   progApplyVoiceLeading();
   progBuildGrid();
 }
@@ -15031,7 +15029,6 @@ function progTapBlock(barIdx, blockIdx) {
   } else {
     bar.splice(blockIdx, 1);
   }
-  if (typeof hapticLight === 'function') hapticLight();
   progApplyVoiceLeading();
   progBuildGrid();
 }
@@ -20662,7 +20659,8 @@ async function hapticCorrect() { if (!progState.hapticsOn) return; try { await w
 // Level up — fireworks: big bang, shimmer, second burst, fade
 async function hapticLevelUp() { if (!progState.hapticsOn) return; try { await window.Haptics.impact({ style: window.ImpactStyle.Heavy }); await new Promise(r => setTimeout(r, 60)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); await new Promise(r => setTimeout(r, 30)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); await new Promise(r => setTimeout(r, 80)); await window.Haptics.impact({ style: window.ImpactStyle.Heavy }); await new Promise(r => setTimeout(r, 40)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); await new Promise(r => setTimeout(r, 25)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); } catch(e) {} }
 // Streak milestone — trumpet "doo doo dooo" + firework burst
-async function hapticMilestone() { if (!progState.hapticsOn) return; try { await window.Haptics.impact({ style: window.ImpactStyle.Medium }); await new Promise(r => setTimeout(r, 120)); await window.Haptics.impact({ style: window.ImpactStyle.Medium }); await new Promise(r => setTimeout(r, 80)); await window.Haptics.impact({ style: window.ImpactStyle.Heavy }); await new Promise(r => setTimeout(r, 50)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); await new Promise(r => setTimeout(r, 30)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); await new Promise(r => setTimeout(r, 70)); await window.Haptics.impact({ style: window.ImpactStyle.Heavy }); await new Promise(r => setTimeout(r, 35)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); } catch(e) {} }
+// Streak milestone — snappy triple tap, "nice, keep going" energy
+async function hapticMilestone() { if (!progState.hapticsOn) return; try { await window.Haptics.impact({ style: window.ImpactStyle.Light }); await new Promise(r => setTimeout(r, 60)); await window.Haptics.impact({ style: window.ImpactStyle.Medium }); await new Promise(r => setTimeout(r, 60)); await window.Haptics.impact({ style: window.ImpactStyle.Heavy }); } catch(e) {} }
 // Beat haptic — pocket mode bumps up so haptic carries alone
 async function hapticBeat(isAccent) {
   if (!progState.hapticsOn) return;
@@ -20910,6 +20908,7 @@ function progLevelUpAnim() {
   chip.classList.remove('leveling-up');
   void chip.offsetWidth;
   chip.classList.add('leveling-up');
+  hapticLevelUp();
   setTimeout(() => chip.classList.remove('leveling-up'), 1300);
 }
 
@@ -27628,7 +27627,6 @@ function gccZoomOpen() {
   if (!voicings.length) return;
   document.getElementById('gccZoomOverlay').classList.add('active');
   gccZoomRender();
-  if (typeof hapticLight === 'function') hapticLight();
 }
 
 function gccZoomClose() {
@@ -27640,7 +27638,6 @@ function gccZoomNavigate(delta) {
   gccVoicingIdx = Math.max(0, Math.min(voicings.length - 1, gccVoicingIdx + delta));
   gccRender();        // keep main diagram in sync
   gccZoomRender();
-  if (typeof hapticLight === 'function') hapticLight();
 }
 
 function gccZoomRender() {
@@ -27704,7 +27701,6 @@ function gccToggleFingering() {
   }
   const v = gccVoicings()[gccVoicingIdx];
   if (v) gccDrawDiagram(v);
-  if (typeof hapticLight === 'function') hapticLight();
 }
 
 // ── Navigation ───────────────────────────────
@@ -27712,7 +27708,6 @@ function gccNavigate(delta) {
   const voicings = gccVoicings();
   gccVoicingIdx = Math.max(0, Math.min(voicings.length - 1, gccVoicingIdx + delta));
   gccRender();
-  if (typeof hapticLight === 'function') hapticLight();
 }
 
 // ── Swipe ────────────────────────────────────
@@ -27762,7 +27757,6 @@ function gccPlayChord() {
   if (!midiNotes.length) return;
 
   gccStop();
-  if (typeof hapticLight === 'function') hapticLight();
 
   const cont = document.getElementById('gccDiagramContainer');
   if (cont) cont.classList.add('playing');
@@ -28245,7 +28239,6 @@ function gssDrawPosition(pos) {
 function gssNavigate(delta) {
   gssPosIdx = Math.max(0, Math.min(gssPositions.length - 1, gssPosIdx + delta));
   gssRender();
-  if (typeof hapticLight === 'function') hapticLight();
 }
 
 function gssToggleNoteNames() {
@@ -28253,7 +28246,6 @@ function gssToggleNoteNames() {
   const btn = document.getElementById('gssNoteNamesBtn');
   if (btn) btn.classList.toggle('active', gssShowNoteNames);
   gssRender();
-  if (typeof hapticLight === 'function') hapticLight();
 }
 
 function gssToggleOctaves() {
@@ -28261,7 +28253,6 @@ function gssToggleOctaves() {
   const btn = document.getElementById('gssOctBtn');
   if (btn) { btn.textContent = gssOctaves === 1 ? '2 OCT' : '1 OCT'; btn.classList.toggle('active', gssOctaves === 2); }
   gssRender();
-  if (typeof hapticLight === 'function') hapticLight();
 }
 
 function gssToggleFretboard() {
@@ -28274,7 +28265,6 @@ function gssToggleFretboard() {
     gssDrawFretboard();
     gssFbUpdateLabels();
   }
-  if (typeof hapticLight === 'function') hapticLight();
 }
 
 function gssFbUpdateLabels() {
@@ -28294,7 +28284,6 @@ function gssFbCycleScale(dir) {
   document.querySelectorAll('#gssTypeRow .gss-type-btn').forEach(b =>
     b.classList.toggle('active', b.textContent === GSS_SCALE_TYPES[next].name));
   gssCompute(); gssRender(); gssDrawFretboard(); gssFbUpdateLabels();
-  if (typeof hapticLight === 'function') hapticLight();
 }
 
 function gssFbCycleRoot(dir) {
@@ -28305,7 +28294,6 @@ function gssFbCycleRoot(dir) {
   document.querySelectorAll('#gssRootGrid .gcc-root-btn').forEach((b, bi) =>
     b.classList.toggle('active', bi === next));
   gssCompute(); gssRender(); gssDrawFretboard(); gssFbUpdateLabels();
-  if (typeof hapticLight === 'function') hapticLight();
 }
 
 function gssDrawFretboard() {
@@ -28521,14 +28509,12 @@ function gssToggleDirection() {
   if (playBtn) playBtn.textContent = asc ? t('gtool_play_asc') : t('gtool_play_desc');
   if (dirBtn)  dirBtn.textContent  = asc ? '▶' : '◀';
   if (hintEl)  hintEl.textContent  = asc ? '▶ toggles ascending / descending · tap a dot to hear' : '◀ toggles descending / ascending · tap a dot to hear';
-  if (typeof hapticLight === 'function') hapticLight();
 }
 
 function gssPlay() {
   if (!gssPositions.length) return;
   const pos = gssPositions[gssPosIdx];
   gssStop();
-  if (typeof hapticLight === 'function') hapticLight();
 
   const cont = document.getElementById('gssDiagramContainer');
   if (cont) cont.classList.add('playing');
@@ -28620,7 +28606,6 @@ function switchChordScaleInstrument(inst) {
     if (gccToolMode === 'chords') pccInit();
     else pssInit();
   }
-  if (typeof hapticLight === 'function') hapticLight();
 }
 
 // ── Fingering algorithms ───────────────────────────────────────
@@ -29391,7 +29376,6 @@ function pssToggleHand() {
   const btn = document.getElementById('pssHandBtn');
   if (btn) { btn.textContent = pssHand; btn.classList.toggle('active', pssHand === 'LH'); }
   pssRender();
-  if (typeof hapticLight === 'function') hapticLight();
 }
 
 function pssToggleDirection() {
@@ -29406,7 +29390,6 @@ function pssToggleDirection() {
     ? '▶ toggles ascending / descending · tap keys to hear'
     : '◀ toggles descending / ascending · tap keys to hear';
   pssRender();
-  if (typeof hapticLight === 'function') hapticLight();
 }
 
 function pssStop() {
@@ -29420,7 +29403,6 @@ function pssPlay() {
   const st = GSS_SCALE_TYPES.find(s => s.id === pssScaleType);
   if (rootIdx < 0 || !st) return;
   pssStop();
-  if (typeof hapticLight === 'function') hapticLight();
 
   const ctx      = getAudio();
   const chain    = buildLimiterChain(ctx, 0.5);
