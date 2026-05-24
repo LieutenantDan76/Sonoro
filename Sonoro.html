@@ -10001,6 +10001,12 @@
       </button>
     </div>
     <div style="font-size:10px;color:var(--muted);margin-top:5px">Vibrate on beats &amp; correct answers. Metronome silent mode is in the METRO tab.</div>
+    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+      <button onclick="hapticCorrect();playCueCorrect();" style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer">TEST CORRECT</button>
+      <button onclick="hapticWrong();playCueWrong();" style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer">TEST WRONG</button>
+      <button onclick="hapticMilestone();playCueMilestone();" style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer">TEST STREAK</button>
+      <button onclick="hapticLevelUp();playCueLevelUp();" style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer">TEST LEVEL UP</button>
+    </div>
 
     <div class="sm-section-title" data-i18n="settings_latency">Latency Measurement</div>
     <div class="sm-calib-hint" id="latHintText" style="margin-bottom:10px">Tap the button each time you <em>hear</em> the click. The ball hits the line exactly when audio is scheduled — the gap between visual and what you hear is your device's audio delay.</div>
@@ -20640,6 +20646,70 @@ function setHelpTips(on) {
   progSave();
 }
 
+
+// ─── AUDIO CUES ───
+// ═══════════════════════════════════════════════
+// Short synthesized sounds paired with key haptic moments.
+// All built with Web Audio API — no files needed.
+// ═══════════════════════════════════════════════
+function _cueCtx() {
+  if (!window._cueAudioCtx || window._cueAudioCtx.state === 'closed') {
+    window._cueAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (window._cueAudioCtx.state === 'suspended') window._cueAudioCtx.resume();
+  return window._cueAudioCtx;
+}
+function _cueTone(ctx, freq, type, start, dur, gain, pitchEnd) {
+  const osc = ctx.createOscillator();
+  const g = ctx.createGain();
+  osc.type = type; osc.frequency.setValueAtTime(freq, start);
+  if (pitchEnd) osc.frequency.exponentialRampToValueAtTime(pitchEnd, start + dur);
+  g.gain.setValueAtTime(0, start);
+  g.gain.linearRampToValueAtTime(gain, start + 0.005);
+  g.gain.exponentialRampToValueAtTime(0.001, start + dur);
+  osc.connect(g); g.connect(ctx.destination);
+  osc.start(start); osc.stop(start + dur + 0.05);
+}
+function _cueNoise(ctx, start, dur, cutoff, gain) {
+  const buf = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * dur), ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  const src = ctx.createBufferSource(); src.buffer = buf;
+  const filt = ctx.createBiquadFilter(); filt.type = 'lowpass'; filt.frequency.value = cutoff;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(gain, start); g.gain.exponentialRampToValueAtTime(0.001, start + dur);
+  src.connect(filt); filt.connect(g); g.connect(ctx.destination);
+  src.start(start); src.stop(start + dur);
+}
+// B · Chime Tick — two-note chime, light then bright
+function playCueCorrect() {
+  const ctx = _cueCtx(); const now = ctx.currentTime;
+  _cueTone(ctx, 523, 'triangle', now, 0.08, 0.15);
+  _cueTone(ctx, 784, 'sine', now + 0.035, 0.2, 0.2);
+  _cueTone(ctx, 1568, 'sine', now + 0.035, 0.12, 0.07);
+}
+// B · Descending Buzz — pitch drops slowly twice
+function playCueWrong() {
+  const ctx = _cueCtx(); const now = ctx.currentTime;
+  _cueTone(ctx, 260, 'sawtooth', now, 0.14, 0.18, 110);
+  _cueTone(ctx, 260, 'sawtooth', now + 0.19, 0.14, 0.18, 110);
+}
+// A · Ascending Fanfare — three notes building up
+function playCueMilestone() {
+  const ctx = _cueCtx(); const now = ctx.currentTime;
+  _cueTone(ctx, 392, 'triangle', now, 0.14, 0.18);
+  _cueTone(ctx, 523, 'triangle', now + 0.14, 0.14, 0.22);
+  _cueTone(ctx, 659, 'triangle', now + 0.28, 0.35, 0.26);
+  _cueTone(ctx, 659 * 1.5, 'sine', now + 0.28, 0.25, 0.1);
+}
+// A · Gameboy Firework — square wave arp burst, pause, second burst
+function playCueLevelUp() {
+  const ctx = _cueCtx(); const now = ctx.currentTime;
+  [[261,0],[329,0.055],[392,0.11],[523,0.165]].forEach(([f,t]) => _cueTone(ctx, f, 'square', now+t, 0.08, 0.16));
+  [[523,0],[659,0.05],[784,0.1],[1047,0.15]].forEach(([f,t]) => _cueTone(ctx, f, 'square', now+0.28+t, 0.1, 0.16));
+  _cueTone(ctx, 1047, 'sine', now + 0.5, 0.4, 0.1);
+}
+
 // ─── HAPTICS ───
 // ═══════════════════════════════════════════════
 // HAPTICS — Capacitor native implementation
@@ -20653,18 +20723,18 @@ async function hapticSelect()  { if (!progState.hapticsOn) return; try { await w
 // In-tune ping — double Light tap, like a little ding ding
 async function hapticSuccess() { if (!progState.hapticsOn) return; try { await window.Haptics.impact({ style: window.ImpactStyle.Light }); await new Promise(r => setTimeout(r, 30)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); } catch(e) {} }
 // Wrong — Heavy stumble then Light, feels like "oops"
-// Wrong — double Heavy punch, unmistakably bad
-async function hapticWrong()   { if (!progState.hapticsOn) return; try { await window.Haptics.impact({ style: window.ImpactStyle.Heavy }); await new Promise(r => setTimeout(r, 60)); await window.Haptics.impact({ style: window.ImpactStyle.Heavy }); } catch(e) {} }
+// Wrong — slow "BZZ...BZZ": Heavy long pause Heavy
+async function hapticWrong()   { if (!progState.hapticsOn) return; try { await window.Haptics.impact({ style: window.ImpactStyle.Heavy }); await new Promise(r => setTimeout(r, 150)); await window.Haptics.impact({ style: window.ImpactStyle.Heavy }); } catch(e) {} }
 // Correct answer — distinct notification Success pulse, separate from in-tune ping
-// Correct answer — Medium + Light with deliberate gap, distinct from wrong
-async function hapticCorrect() { if (!progState.hapticsOn) return; try { await window.Haptics.impact({ style: window.ImpactStyle.Medium }); await new Promise(r => setTimeout(r, 80)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); } catch(e) {} }
+// Correct — quick "da-Dink": Light then Medium
+async function hapticCorrect() { if (!progState.hapticsOn) return; try { await window.Haptics.impact({ style: window.ImpactStyle.Light }); await new Promise(r => setTimeout(r, 30)); await window.Haptics.impact({ style: window.ImpactStyle.Medium }); } catch(e) {} }
 // Level up — fireworks: big bang, shimmer, second burst, fade
-// Level up — full fireworks cascade
-async function hapticLevelUp() { if (!progState.hapticsOn) return; try { await window.Haptics.impact({ style: window.ImpactStyle.Heavy }); await new Promise(r => setTimeout(r, 80)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); await new Promise(r => setTimeout(r, 40)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); await new Promise(r => setTimeout(r, 100)); await window.Haptics.impact({ style: window.ImpactStyle.Heavy }); await new Promise(r => setTimeout(r, 60)); await window.Haptics.impact({ style: window.ImpactStyle.Medium }); await new Promise(r => setTimeout(r, 40)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); await new Promise(r => setTimeout(r, 30)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); } catch(e) {} }
+// Level up — fireworks cascade with breathing room
+async function hapticLevelUp() { if (!progState.hapticsOn) return; try { await window.Haptics.impact({ style: window.ImpactStyle.Heavy }); await new Promise(r => setTimeout(r, 100)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); await new Promise(r => setTimeout(r, 50)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); await new Promise(r => setTimeout(r, 120)); await window.Haptics.impact({ style: window.ImpactStyle.Heavy }); await new Promise(r => setTimeout(r, 100)); await window.Haptics.impact({ style: window.ImpactStyle.Medium }); await new Promise(r => setTimeout(r, 60)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); await new Promise(r => setTimeout(r, 40)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); } catch(e) {} }
 // Streak milestone — trumpet "doo doo dooo" + firework burst
 // Streak milestone — snappy triple tap, "nice, keep going" energy
-// Streak milestone — builds Light→Medium→Heavy→Heavy, escalating peak
-async function hapticMilestone() { if (!progState.hapticsOn) return; try { await window.Haptics.impact({ style: window.ImpactStyle.Light }); await new Promise(r => setTimeout(r, 80)); await window.Haptics.impact({ style: window.ImpactStyle.Medium }); await new Promise(r => setTimeout(r, 80)); await window.Haptics.impact({ style: window.ImpactStyle.Heavy }); await new Promise(r => setTimeout(r, 100)); await window.Haptics.impact({ style: window.ImpactStyle.Heavy }); } catch(e) {} }
+// Streak milestone — ceremonial build with breathing room
+async function hapticMilestone() { if (!progState.hapticsOn) return; try { await window.Haptics.impact({ style: window.ImpactStyle.Light }); await new Promise(r => setTimeout(r, 120)); await window.Haptics.impact({ style: window.ImpactStyle.Medium }); await new Promise(r => setTimeout(r, 120)); await window.Haptics.impact({ style: window.ImpactStyle.Heavy }); await new Promise(r => setTimeout(r, 120)); await window.Haptics.impact({ style: window.ImpactStyle.Heavy }); } catch(e) {} }
 // Beat haptic — pocket mode bumps up so haptic carries alone
 async function hapticBeat(isAccent) {
   if (!progState.hapticsOn) return;
