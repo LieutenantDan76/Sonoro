@@ -1,0 +1,6 @@
+{
+  "appId": "com.lieutenantdan.sonoro",
+  "appName": "Sonoro",
+  "webDir": "www",
+  "bundledWebRuntime": false
+}
