@@ -19219,6 +19219,7 @@ function checkStreakMilestone(streak) {
   const label = document.getElementById('streakMilestoneText');
   if (!toast || !label) return;
   label.textContent = t('iv_streak').toUpperCase() + ' ' + hit + '!';
+  hapticMilestone();
   toast.style.display = 'block';
   const inner = toast.querySelector('.streak-milestone-inner');
   inner.style.animation = 'none';
@@ -20652,10 +20653,27 @@ function setHelpTips(on) {
 async function hapticLight()   { if (!progState.hapticsOn) return; try { await window.Haptics.impact({ style: window.ImpactStyle.Light }); } catch(e) {} }
 async function hapticMedium()  { if (!progState.hapticsOn) return; try { await window.Haptics.impact({ style: window.ImpactStyle.Medium }); } catch(e) {} }
 async function hapticSelect()  { if (!progState.hapticsOn) return; try { await window.Haptics.selectionChanged(); } catch(e) {} }
-async function hapticSuccess() { if (!progState.hapticsOn) return; try { await window.Haptics.notification({ type: window.NotificationType.Success }); } catch(e) {} }
-async function hapticWrong()   { if (!progState.hapticsOn) return; try { await window.Haptics.notification({ type: window.NotificationType.Error }); } catch(e) {} }
-function hapticCorrect() { hapticSuccess(); }
-async function hapticBeat(isAccent) { if (!progState.hapticsOn) return; try { await window.Haptics.impact({ style: isAccent ? window.ImpactStyle.Heavy : window.ImpactStyle.Light }); } catch(e) {} }
+// In-tune ping — double Light tap, like a little ding ding
+async function hapticSuccess() { if (!progState.hapticsOn) return; try { await window.Haptics.impact({ style: window.ImpactStyle.Light }); await new Promise(r => setTimeout(r, 30)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); } catch(e) {} }
+// Wrong — Heavy stumble then Light, feels like "oops"
+async function hapticWrong()   { if (!progState.hapticsOn) return; try { await window.Haptics.impact({ style: window.ImpactStyle.Heavy }); await new Promise(r => setTimeout(r, 50)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); } catch(e) {} }
+// Correct answer — distinct notification Success pulse, separate from in-tune ping
+async function hapticCorrect() { if (!progState.hapticsOn) return; try { await window.Haptics.notification({ type: window.NotificationType.Success }); } catch(e) {} }
+// Level up — fireworks: big bang, shimmer, second burst, fade
+async function hapticLevelUp() { if (!progState.hapticsOn) return; try { await window.Haptics.impact({ style: window.ImpactStyle.Heavy }); await new Promise(r => setTimeout(r, 60)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); await new Promise(r => setTimeout(r, 30)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); await new Promise(r => setTimeout(r, 80)); await window.Haptics.impact({ style: window.ImpactStyle.Heavy }); await new Promise(r => setTimeout(r, 40)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); await new Promise(r => setTimeout(r, 25)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); } catch(e) {} }
+// Streak milestone — trumpet "doo doo dooo" + firework burst
+async function hapticMilestone() { if (!progState.hapticsOn) return; try { await window.Haptics.impact({ style: window.ImpactStyle.Medium }); await new Promise(r => setTimeout(r, 120)); await window.Haptics.impact({ style: window.ImpactStyle.Medium }); await new Promise(r => setTimeout(r, 80)); await window.Haptics.impact({ style: window.ImpactStyle.Heavy }); await new Promise(r => setTimeout(r, 50)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); await new Promise(r => setTimeout(r, 30)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); await new Promise(r => setTimeout(r, 70)); await window.Haptics.impact({ style: window.ImpactStyle.Heavy }); await new Promise(r => setTimeout(r, 35)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); } catch(e) {} }
+// Beat haptic — pocket mode bumps up so haptic carries alone
+async function hapticBeat(isAccent) {
+  if (!progState.hapticsOn) return;
+  try {
+    if (!metroAudioOn) {
+      await window.Haptics.impact({ style: isAccent ? window.ImpactStyle.Heavy : window.ImpactStyle.Medium });
+    } else {
+      await window.Haptics.impact({ style: isAccent ? window.ImpactStyle.Heavy : window.ImpactStyle.Light });
+    }
+  } catch(e) {}
+}
 
 function setHaptics(on) {
   progState.hapticsOn = !!on;
