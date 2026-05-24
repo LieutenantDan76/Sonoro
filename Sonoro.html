@@ -20652,8 +20652,20 @@ function setHelpTips(on) {
 // Short synthesized sounds paired with key haptic moments.
 // All built with Web Audio API — no files needed.
 // ═══════════════════════════════════════════════
+// Audio context — created eagerly on first touch, reused forever
+// This is the correct pattern for Capacitor WebView which blocks AudioContext
+// creation until a user gesture has occurred on the page.
+window._cueAudioCtx = null;
+document.addEventListener('touchstart', function _unlockCueAudio() {
+  if (!window._cueAudioCtx) {
+    window._cueAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (window._cueAudioCtx.state === 'suspended') window._cueAudioCtx.resume();
+  document.removeEventListener('touchstart', _unlockCueAudio);
+}, { once: true, passive: true });
+
 function _cueCtx() {
-  if (!window._cueAudioCtx || window._cueAudioCtx.state === 'closed') {
+  if (!window._cueAudioCtx) {
     window._cueAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
   }
   if (window._cueAudioCtx.state === 'suspended') window._cueAudioCtx.resume();
