@@ -1,0 +1,6 @@
+@echo off
+echo Syncing to Android...
+npx cap sync android
+echo Verifying...
+findstr "cueSelect_correct" android\app\src\main\assets\public\index.html
+echo Done! Now hit Run in Android Studio.

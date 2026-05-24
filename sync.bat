@@ -7,8 +7,6 @@ echo Copying Sonoro.html to www...
 del /F www\index.html
 copy /Y Sonoro.html www\index.html
 echo Syncing to Capacitor...
+npx cap sync
 npx cap sync android
-echo Verifying android assets...
-findstr /C:"function _cueNote" android\app\src\main\assets\public\index.html > nul 2>&1
-if %errorlevel%==0 (echo [OK] Android assets updated) else (echo [WARN] Android assets may be stale - run npx cap sync manually)
 echo Done! Hit Run in Android Studio, then clear app cache on phone.
