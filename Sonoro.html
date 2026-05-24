@@ -10001,11 +10001,26 @@
       </button>
     </div>
     <div style="font-size:10px;color:var(--muted);margin-top:5px">Vibrate on beats &amp; correct answers. Metronome silent mode is in the METRO tab.</div>
-    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
-      <button onclick="hapticCorrect();playCueCorrect();" style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer">TEST CORRECT</button>
-      <button onclick="hapticWrong();playCueWrong();" style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer">TEST WRONG</button>
-      <button onclick="hapticMilestone();playCueMilestone();" style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer">TEST STREAK</button>
-      <button onclick="hapticLevelUp();playCueLevelUp();" style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer">TEST LEVEL UP</button>
+
+    <div class="sm-section-title" style="margin-top:14px">Audio Cues</div>
+    <div style="font-size:10px;color:var(--muted);margin-bottom:10px">Selecting a sound previews it with its haptic.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+      <div>
+        <div style="font-size:9px;letter-spacing:.1em;color:var(--muted);margin-bottom:3px">CORRECT</div>
+        <select id="cueSelect_correct" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 7px;cursor:pointer"></select>
+      </div>
+      <div>
+        <div style="font-size:9px;letter-spacing:.1em;color:var(--muted);margin-bottom:3px">WRONG</div>
+        <select id="cueSelect_wrong" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 7px;cursor:pointer"></select>
+      </div>
+      <div>
+        <div style="font-size:9px;letter-spacing:.1em;color:var(--muted);margin-bottom:3px">STREAK</div>
+        <select id="cueSelect_milestone" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 7px;cursor:pointer"></select>
+      </div>
+      <div>
+        <div style="font-size:9px;letter-spacing:.1em;color:var(--muted);margin-bottom:3px">LEVEL UP</div>
+        <select id="cueSelect_levelup" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 7px;cursor:pointer"></select>
+      </div>
     </div>
 
     <div class="sm-section-title" data-i18n="settings_latency">Latency Measurement</div>
@@ -13743,7 +13758,7 @@ function ivCheckPitch(detectedFreq) {
     ivCorrect++;
     ivStreak++;
     ivRecordCorrect(ivCurrentRound.interval);
-    hapticCorrect();
+    hapticCorrect(); playCueCorrect();
     checkStreakMilestone(ivStreak);
     ivStartCountdown();
     ivFbText(t('iv_got_it') + (Math.abs(semisFromTarget) > 6 ? t('iv_octave_displaced') : 'perfect'));
@@ -18006,7 +18021,7 @@ function tgLockGuess() {
   progAddXp(xp);
   progUpdate('tempoguess', { bestDelta: tgStats.bestDelta, streak: tgStats.streak, rounds: tgStats.rounds });
   const isGood = absDelta <= 10;
-  if (isGood) hapticCorrect();
+  if (isGood) { hapticCorrect(); playCueCorrect(); }
   tgStartCountdown(isGood);
 }
 
@@ -19080,7 +19095,7 @@ function ssAdvanceSequence() {
     fb.className = 'iv-feedback got';
     document.getElementById('ssHoldBar').style.width = '100%';
     ssRenderDots();
-    hapticCorrect();
+    hapticCorrect(); playCueCorrect();
     ssGotIt = true;
     ssStartCountdown();
   } else {
@@ -19222,7 +19237,7 @@ function checkStreakMilestone(streak) {
   const label = document.getElementById('streakMilestoneText');
   if (!toast || !label) return;
   label.textContent = t('iv_streak').toUpperCase() + ' ' + hit + '!';
-  hapticMilestone();
+  hapticMilestone(); playCueMilestone();
   toast.style.display = 'block';
   const inner = toast.querySelector('.streak-milestone-inner');
   inner.style.animation = 'none';
@@ -19555,12 +19570,12 @@ function ceAnswer(symbol) {
       progAddXp(xp);
       const bonusTag = bonus ? '  +' + bonus + ' streak' : '';
       ceFbText('★ CORRECT' + bonusTag + '  —  ' + rootName + ' ' + (correctDef?.name || ''));
-      hapticCorrect();
+      hapticCorrect(); playCueCorrect();
       checkStreakMilestone(ceStreakCount);
     } else {
       // Retry correct: no XP, no streak bump
       ceFbText(t('ce_got_it') + '  —  ' + rootName + ' ' + (correctDef?.name || ''));
-      hapticCorrect();
+      hapticCorrect(); playCueCorrect();
     }
     fb.className = 'iv-feedback got';
     document.getElementById(correctId)?.classList.add('correct');
@@ -19568,7 +19583,7 @@ function ceAnswer(symbol) {
 
   } else {
     ceStreakCount = 0;
-    hapticWrong();
+    hapticWrong(); playCueWrong();
     document.getElementById(chosenId)?.classList.add('wrong');
 
     if (retryNum === 0) {
@@ -19689,6 +19704,7 @@ let progState = {
   teachingMode: false,
   helpTips: true,          // show/hide ? help buttons
   hapticsOn: false,
+  audioCues: { correct:'chime', wrong:'buzz', milestone:'fanfare', levelup:'gameboy' },
   stats: {
     tempo:      {},  // best ms, streak, rounds
     interval:   {},  // best streak, correct, difficulty
@@ -20602,6 +20618,7 @@ function openSettings() {
   });
   latDrawIdle();
   syncSettingsUI();
+  renderCueDropdowns();
   document.getElementById('settingsModal').classList.add('active');
 }
 function syncSettingsUI() {
@@ -20647,18 +20664,14 @@ function setHelpTips(on) {
 }
 
 
-// ─── AUDIO CUES ───
-// ═══════════════════════════════════════════════
-// Short synthesized sounds paired with key haptic moments.
-// All built with Web Audio API — no files needed.
-// Uses Sonoro's proven buildLimiterChain pattern — same as piano/ref tones.
+// ─── AUDIO CUES ─────────────────────────────────────────────────────────────
+// All via Sonoro's proven buildLimiterChain pattern — same as piano/ref tones.
 // ═══════════════════════════════════════════════
 function _cueNote(freq, type, when, dur, vol) {
   const ctx = getAudio();
   const chain = buildLimiterChain(ctx, 0.5);
   const osc = ctx.createOscillator();
-  osc.type = type;
-  osc.frequency.setValueAtTime(freq, when);
+  osc.type = type; osc.frequency.setValueAtTime(freq, when);
   const g = ctx.createGain();
   g.gain.setValueAtTime(0, when);
   g.gain.linearRampToValueAtTime(vol, when + 0.008);
@@ -20666,48 +20679,80 @@ function _cueNote(freq, type, when, dur, vol) {
   osc.connect(g); g.connect(chain.gain);
   osc.start(when); osc.stop(when + dur + 0.05);
 }
-// B · Chime Tick — two-note chime, light then bright
-function playCueCorrect() {
-  const now = getAudio().currentTime;
-  _cueNote(523, 'triangle', now, 0.1, 0.22);
-  _cueNote(784, 'sine', now + 0.04, 0.25, 0.28);
-  _cueNote(1568, 'sine', now + 0.04, 0.15, 0.1);
+function _cueSweep(freqStart, freqEnd, type, when, dur, vol) {
+  const ctx = getAudio();
+  const chain = buildLimiterChain(ctx, 0.45);
+  const osc = ctx.createOscillator();
+  osc.type = type; osc.frequency.setValueAtTime(freqStart, when);
+  osc.frequency.exponentialRampToValueAtTime(freqEnd, when + dur);
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(vol, when); g.gain.exponentialRampToValueAtTime(0.001, when + dur);
+  osc.connect(g); g.connect(chain.gain);
+  osc.start(when); osc.stop(when + dur + 0.05);
 }
-// B · Descending Buzz — two low sawtooth notes, slow and ominous
-function playCueWrong() {
-  const ctx = getAudio(); const now = ctx.currentTime;
-  // Two descending buzzes using pitch ramp
-  const chain1 = buildLimiterChain(ctx, 0.4);
-  const osc1 = ctx.createOscillator(); osc1.type = 'sawtooth';
-  osc1.frequency.setValueAtTime(260, now);
-  osc1.frequency.exponentialRampToValueAtTime(110, now + 0.18);
-  const g1 = ctx.createGain();
-  g1.gain.setValueAtTime(0.22, now); g1.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
-  osc1.connect(g1); g1.connect(chain1.gain);
-  osc1.start(now); osc1.stop(now + 0.2);
-  const chain2 = buildLimiterChain(ctx, 0.4);
-  const osc2 = ctx.createOscillator(); osc2.type = 'sawtooth';
-  osc2.frequency.setValueAtTime(260, now + 0.22);
-  osc2.frequency.exponentialRampToValueAtTime(110, now + 0.4);
-  const g2 = ctx.createGain();
-  g2.gain.setValueAtTime(0.22, now + 0.22); g2.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
-  osc2.connect(g2); g2.connect(chain2.gain);
-  osc2.start(now + 0.22); osc2.stop(now + 0.42);
+
+// ── CORRECT ──
+function _cueCorrectChime() { const n=getAudio().currentTime; _cueNote(523,'triangle',n,0.1,0.22); _cueNote(784,'sine',n+0.04,0.25,0.28); _cueNote(1568,'sine',n+0.04,0.15,0.1); }
+function _cueCorrectBlip()  { const n=getAudio().currentTime; _cueNote(440,'sine',n,0.06,0.2); _cueNote(660,'sine',n+0.04,0.15,0.24); }
+function _cueCorrectPiano() { const n=getAudio().currentTime; _cueNote(523,'sine',n,0.35,0.28); _cueNote(523,'triangle',n,0.2,0.12); _cueNote(1046,'sine',n,0.15,0.08); }
+
+// ── WRONG ──
+function _cueWrongBuzz()  { const n=getAudio().currentTime; _cueSweep(260,110,'sawtooth',n,0.18,0.22); _cueSweep(260,110,'sawtooth',n+0.22,0.18,0.22); }
+function _cueWrongThud()  { const n=getAudio().currentTime; _cueSweep(120,55,'sine',n,0.2,0.3); _cueNote(80,'sine',n,0.25,0.2); }
+// Clunk: mid-high dissonant cluster — two sawtooth waves a semitone apart, cuts through
+function _cueWrongClunk() { const n=getAudio().currentTime; _cueNote(466,'sawtooth',n,0.18,0.28); _cueNote(493,'sawtooth',n,0.18,0.24); _cueNote(233,'sine',n,0.2,0.18); }
+
+// ── MILESTONE ──
+function _cueMilestoneFanfare() { const n=getAudio().currentTime; _cueNote(392,'triangle',n,0.18,0.2); _cueNote(523,'triangle',n+0.16,0.18,0.24); _cueNote(659,'triangle',n+0.32,0.4,0.28); _cueNote(988,'sine',n+0.32,0.3,0.12); }
+function _cueMilestoneCoin()    { const n=getAudio().currentTime; _cueNote(880,'square',n,0.07,0.2); _cueNote(1175,'square',n+0.08,0.07,0.2); _cueNote(1760,'sine',n+0.16,0.3,0.15); _cueNote(3520,'sine',n+0.16,0.2,0.06); }
+function _cueMilestoneBrass()   { const n=getAudio().currentTime; _cueNote(220,'sawtooth',n,0.15,0.18); _cueNote(330,'sawtooth',n,0.15,0.14); _cueNote(440,'sawtooth',n,0.15,0.1); _cueNote(660,'sine',n+0.12,0.25,0.18); }
+
+// ── LEVEL UP ──
+function _cueLevelUpGameboy()    { const n=getAudio().currentTime; [[261,0],[329,.055],[392,.11],[523,.165]].forEach(([f,t])=>_cueNote(f,'square',n+t,0.1,0.18)); [[523,0],[659,.05],[784,.1],[1047,.15]].forEach(([f,t])=>_cueNote(f,'square',n+.3+t,0.12,0.18)); _cueNote(1047,'sine',n+.52,0.45,0.12); }
+function _cueLevelUpOrchestral() { const n=getAudio().currentTime; [261,329,392].forEach(f=>_cueNote(f,'triangle',n,0.25,0.15)); _cueNote(784,'sine',n,0.2,0.1); _cueNote(1568,'sine',n+0.1,0.15,0.07); [392,523,659].forEach(f=>_cueNote(f,'triangle',n+0.32,0.38,0.15)); _cueNote(1319,'sine',n+0.32,0.3,0.08); }
+function _cueLevelUpSwell()      { const n=getAudio().currentTime; [261,329,392].forEach((f,i)=>{_cueNote(f,'sine',n+i*.09,0.5-i*.1,0.2);_cueNote(f*2,'sine',n+i*.09,0.3,0.07);}); [523,659,784,1047].forEach((f,i)=>{_cueNote(f,'sine',n+.35+i*.08,0.45-i*.08,0.18);_cueNote(f*2,'sine',n+.35+i*.08,0.25,0.06);}); }
+
+// ── DISPATCHERS ──
+function playCueCorrect()   { const k=progState.audioCues?.correct;   if(k==='chime')_cueCorrectChime(); else if(k==='blip')_cueCorrectBlip(); else if(k==='piano')_cueCorrectPiano(); }
+function playCueWrong()     { const k=progState.audioCues?.wrong;     if(k==='buzz')_cueWrongBuzz(); else if(k==='thud')_cueWrongThud(); else if(k==='clunk')_cueWrongClunk(); }
+function playCueMilestone() { const k=progState.audioCues?.milestone; if(k==='fanfare')_cueMilestoneFanfare(); else if(k==='coin')_cueMilestoneCoin(); else if(k==='brass')_cueMilestoneBrass(); }
+function playCueLevelUp()   { const k=progState.audioCues?.levelup;   if(k==='gameboy')_cueLevelUpGameboy(); else if(k==='orchestral')_cueLevelUpOrchestral(); else if(k==='swell')_cueLevelUpSwell(); }
+
+// Set choice, save, re-render, preview
+function setCueChoice(event, key) {
+  if (!progState.audioCues) progState.audioCues = {};
+  progState.audioCues[event] = key;
+  progSave();
+  renderCueDropdowns();
+  if (event==='correct')   { hapticCorrect(); playCueCorrect(); }
+  else if (event==='wrong')     { hapticWrong(); playCueWrong(); }
+  else if (event==='milestone') { hapticMilestone(); playCueMilestone(); }
+  else if (event==='levelup')   { hapticLevelUp(); playCueLevelUp(); }
 }
-// A · Ascending Fanfare — three notes building up
-function playCueMilestone() {
-  const now = getAudio().currentTime;
-  _cueNote(392, 'triangle', now, 0.18, 0.2);
-  _cueNote(523, 'triangle', now + 0.16, 0.18, 0.24);
-  _cueNote(659, 'triangle', now + 0.32, 0.4, 0.28);
-  _cueNote(988, 'sine', now + 0.32, 0.3, 0.12);
-}
-// A · Gameboy Firework — square wave arp burst, pause, second burst
-function playCueLevelUp() {
-  const now = getAudio().currentTime;
-  [[261,0],[329,0.055],[392,0.11],[523,0.165]].forEach(([f,t]) => _cueNote(f, 'square', now+t, 0.1, 0.18));
-  [[523,0],[659,0.05],[784,0.1],[1047,0.15]].forEach(([f,t]) => _cueNote(f, 'square', now+0.3+t, 0.12, 0.18));
-  _cueNote(1047, 'sine', now + 0.52, 0.45, 0.12);
+
+// Render compact 2x2 dropdowns in settings
+function renderCueDropdowns() {
+  const c = progState.audioCues || {};
+  const rows = [
+    { event:'correct',   options:[{k:'chime',l:'Chime Tick'},{k:'blip',l:'Soft Blip'},{k:'piano',l:'Piano Key'},{k:'silent',l:'Silent'}] },
+    { event:'wrong',     options:[{k:'buzz',l:'Buzz Buzz'},{k:'thud',l:'Low Thud'},{k:'clunk',l:'Dissonant Clunk'},{k:'silent',l:'Silent'}] },
+    { event:'milestone', options:[{k:'fanfare',l:'Fanfare'},{k:'coin',l:'Coin Shimmer'},{k:'brass',l:'Brass Stab'},{k:'silent',l:'Silent'}] },
+    { event:'levelup',   options:[{k:'gameboy',l:'Gameboy'},{k:'orchestral',l:'Orchestral'},{k:'swell',l:'Chime Swell'},{k:'silent',l:'Silent'}] },
+  ];
+  rows.forEach(({ event, options }) => {
+    const sel = document.getElementById('cueSelect_' + event);
+    if (!sel) return;
+    const def = {correct:'chime',wrong:'buzz',milestone:'fanfare',levelup:'gameboy'}[event];
+    const current = c[event] || def;
+    sel.innerHTML = '';
+    options.forEach(({ k, l }) => {
+      const opt = document.createElement('option');
+      opt.value = k; opt.textContent = l;
+      if (k === current) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    sel.onchange = () => setCueChoice(event, sel.value);
+  });
 }
 
 // ─── HAPTICS ───
@@ -20982,7 +21027,7 @@ function progLevelUpAnim() {
   chip.classList.remove('leveling-up');
   void chip.offsetWidth;
   chip.classList.add('leveling-up');
-  hapticLevelUp();
+  hapticLevelUp(); playCueLevelUp();
   setTimeout(() => chip.classList.remove('leveling-up'), 1300);
 }
 
