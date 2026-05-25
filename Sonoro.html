@@ -8626,7 +8626,7 @@
             </svg>
             ZOOM
           </button>
-          <div class="gcc-chord-name idle" id="gccChordName" style="width:100%;text-align:center" data-i18n="pcc_pick">PICK ROOT + QUALITY</div>
+          <div class="gcc-chord-name idle" id="gccChordName" data-i18n="pcc_pick" style="width:100%;text-align:center" data-i18n="pcc_pick">PICK ROOT + QUALITY</div>
           <div class="gcc-chord-sub" id="gccChordSub" style="text-align:center"></div>
           <div class="gcc-diagram-wrap">
             <button class="gcc-nav-btn" id="gccPrev" onclick="gccNavigate(-1)" disabled>‹</button>
@@ -12172,7 +12172,7 @@ function stopMic() {
   // Disconnect graph but DON'T close the shared context — other modules need it.
   if (micSource) { try { micSource.disconnect(); } catch(e) {} }
   if (analyser) { try { analyser.disconnect(); } catch(e) {} }
-  if (micStream) micStream.getTracks().forEach(t => t.stop());
+  if (micStream) micStream.getTracks().forEach(track => track.stop());
   micSource = analyser = micStream = null;
   audioCtx = null;  // local alias; shared context keeps running
   smoothedFreq = 0;
@@ -12505,7 +12505,7 @@ function drawBeats() {
 function setMetroTab(tab) {
   if (tab === 'analyse') showMic();
   else hideMic();
-  ['click','analyse'].forEach(t => {
+  ['click','analyse'].forEach(mode => {
     const btn = document.getElementById(`mst-${t}`);
     const panel = document.getElementById(`mp-${t}`);
     if (btn) btn.classList.toggle('active', t === tab);
@@ -13782,7 +13782,7 @@ function ivInit() {
     [[1,'1'],[2,'2'],[3,'3']].forEach(([key, label]) => {
       const btn = document.createElement('button');
       btn.className = 'iv-filter' + (key === ivSeqLen ? ' active' : '');
-      btn.textContent = label;
+      btn.textContent = t(label);
       btn.onclick = () => { ivSeqLen = key; seqRow.querySelectorAll('.iv-filter').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); };
       seqRow.appendChild(btn);
     });
@@ -13893,7 +13893,7 @@ function ivReplay() { ivPlayReference(); }
 function ivStop() {
   ivCancelCountdown();
   ivSession++;
-  ivTimers.forEach(t => clearTimeout(t));
+  ivTimers.forEach(timer => clearTimeout(timer));
   ivTimers = [];
 }
 
@@ -14193,7 +14193,7 @@ function chordInit() {
 }
 
 function setChordTab(tab) {
-  ['player','builder'].forEach(t => {
+  ['player','builder'].forEach(tab => {
     document.getElementById(`cst-${t}`).classList.toggle('active', t === tab);
     document.getElementById(`cp-${t}`).classList.toggle('active', t === tab);
   });
@@ -15311,7 +15311,7 @@ function progStopSyncSource(mode) {
     dk_currentStep  = 0;
     dk_notesInQueue = [];
     if (typeof TRACKS !== 'undefined') {
-      TRACKS.forEach(t => { dk_trackPhase[t.id] = 0; });
+      TRACKS.forEach(trk => { dk_trackPhase[trk.id] = 0; });
     }
     document.querySelectorAll('.step.cursor').forEach(e => e.classList.remove('cursor'));
     progDkUpdatePlayBtn();
@@ -17690,7 +17690,7 @@ function tlDrawLoop() {
       tlTaps = [];
       tlSilentBeatTimes = [];
       // Dim all ticks — silence phase
-      document.querySelectorAll('#tlTickGroup .tg-tick').forEach(t => t.classList.remove('lit'));
+      document.querySelectorAll('#tlTickGroup .tg-tick').forEach(tick => tick.classList.remove('lit'));
     } else if (ev.type === 'enter-active') {
       tlEvaluateRound(ev.time);
       if (tlRandomMode) tlPickRandomBpm();
@@ -17828,7 +17828,7 @@ let tgStats = { streak: 0, rounds: 0, bestDelta: null };
 const TG_DIFFICULTIES = {
   easy:   { labelKey: 'tg_grade_close', label: 'EASY',   range: 'common', min: 60,  max: 140, step: 5 },
   normal: { label: 'NORMAL', range: 'wide',   min: 50,  max: 180, step: 1 },
-  hard:   { label: 'HARD',   range: 'full',   min: 40,  max: 220, step: 1 },
+  hard:   { label: 'HARD',   labelIt: 'DIFFICILE',   range: 'full',   min: 40,  max: 220, step: 1 },
 };
 
 let tgSubdiv = 'quarter';   // whole | half | quarter | eighth
@@ -19006,9 +19006,9 @@ const SS_NOTE_MODES = {
   hidden: { label: 'HIDDEN', labelIt: 'NASCOSTA' },
 };
 const SS_PLAY_MODES = {
-  single:  { label: 'SINGLE',  count: 1 },
-  string:  { label: 'STRINGS', count: 4 },
-  arpeggio:{ label: 'ARPEGGIO',count: 0 },  // count set dynamically from chord
+  single:  { label: 'SINGLE',  labelIt: 'SINGOLA',  count: 1 },
+  string:  { label: 'STRINGS', labelIt: 'CORDE',     count: 4 },
+  arpeggio:{ label: 'ARPEGGIO',labelIt: 'ARPEGGIO', count: 0 },  // count set dynamically from chord
 };
 
 let ssVoice     = 'tenor';
@@ -19063,7 +19063,7 @@ function ssInit() {
   Object.entries(SS_PLAY_MODES).forEach(([key, d]) => {
     const btn = document.createElement('button');
     btn.className = 'iv-filter' + (key === ssPlayMode ? ' active' : '');
-    btn.textContent = d.label;
+    btn.textContent = ((progState.lang === 'it')&&d.labelIt)?d.labelIt:d.label;
     btn.onclick = () => { ssPlayMode = key; ssInit(); };
     modeRow.appendChild(btn);
   });
@@ -19416,13 +19416,13 @@ function checkStreakMilestone(streak) {
 // ═══════════════════════════════════════════════
 const CE_DIFFICULTIES = {
   // Easy (4): basic triads — the building blocks
-  easy:   { label: 'EASY',
+  easy:   { label: 'EASY',   labelIt: 'FACILE',
     syms: new Set(['','m','dim','aug']) },
   // Medium (9): adds 7ths and suspended chords
-  medium: { label: 'MEDIUM',
+  medium: { label: 'MEDIUM', labelIt: 'MEDIO',
     syms: new Set(['','m','dim','aug','maj7','m7','7','sus4','sus2']) },
   // Hard (14): adds 6ths and 9ths
-  hard:   { label: 'HARD',
+  hard:   { label: 'HARD',   labelIt: 'DIFFICILE',
     syms: new Set(['','m','dim','aug','maj7','m7','7','sus4','sus2',
                    '6','m6','maj9','m9','9']) },
   // All: full library minus pure interval dyads (those live in custom only)
@@ -19609,7 +19609,7 @@ function ceBuildPool() {
   Object.entries(CE_DIFFICULTIES).forEach(([key, d]) => {
     const btn = document.createElement('button');
     btn.className = 'iv-filter' + (key === ceDifficulty ? ' active' : '');
-    btn.textContent = d.label;
+    btn.textContent = ((progState.lang === 'it')&&d.labelIt)?d.labelIt:d.label;
     btn.onclick = () => {
       document.querySelectorAll('.ce-pool-preset-row .iv-filter').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
@@ -20192,6 +20192,15 @@ const STRINGS = {
     vr_waiting:'Waiting for input…',
     vr_saved:'✓ Saved',
     vr_all_artists:'All Artists',
+    vr_tessitura_desc:'The sweet spot of your voice — where your tone is most resonant, effortless, and sustainable. Professional classification is based primarily on tessitura center, not extreme notes.',
+    vr_passaggio_desc:'The register break — where your voice transitions from chest to head voice. Its location is a key diagnostic tool for vocal coaches when classifying voice type.',
+    vr_phys_perf_desc:'Your physiological range is everything you can technically produce. Your performing range is what sounds musical reliably. The performing center predicts voice type with 97.8% accuracy — the extremes predict it at just 60%.',
+    vr_voice_map:'Voice Type Map', vr_discover_artists:'Artists',
+    vr_ranges_bands:'Ranges · bands', vr_all_types:'All Types',
+    vr_inc_specialist:'Inc. specialist', vr_key_concepts:'Key Concepts',
+    vr_tessitura:'Tessitura', vr_passaggio:'Passaggio',
+    vr_phys_vs_perf:'Physiological vs. Performing Range',
+    vr_all_types_check:'All Types ✓',
     vr_artist_ref:'Artist Reference',
     // Other JS dynamic strings
     label_beats_per_bar:'BEATS PER BAR',
@@ -20525,7 +20534,7 @@ const STRINGS = {
     snd_bell_chord:'Campana', snd_drumroll:'Rullo',
     snd_gameboy:'Gameboy', snd_orchestral:'Orchestrale', snd_swell:'Carillon',
     snd_powerup:'Salita', snd_harp_cascade:'Cascata Arpa', snd_zelda:'Tesoro!',
-        unknown_note:'SCONOSCIUTO', unknown_note_it:'SCONOSCIUTO', vol_label:'VOLUME', sub_label:'SUB', tone_label:'TONO', lat_tap_btn:'TOCCA',
+    unknown_note:'SCONOSCIUTO', vol_label:'VOLUME', sub_label:'SUB', tone_label:'TONO', lat_tap_btn:'TOCCA',
     ss_wrong_label:'SBAGL.',
     ce_not_quite:'Non esatto — riascolta…', ce_nope:'No — ancora un ascolto…',
     ce_try_again:'Riprova — nessun XP', ce_one_more:'Ultimo tentativo — nessun XP',
@@ -20673,6 +20682,15 @@ const STRINGS = {
     vr_waiting:'In attesa di input…',
     vr_saved:'✓ Salvato',
     vr_all_artists:'Tutti gli Artisti',
+    vr_tessitura_desc:'Il punto ideale della tua voce — dove il tuo timbro è più risonante, naturale e sostenibile. La classificazione professionale si basa principalmente sul centro della tessitura, non sulle note estreme.',
+    vr_passaggio_desc:'Il passaggio di registro — dove la voce transisce dal registro di petto a quello di testa. La sua posizione è uno strumento diagnostico chiave per i maestri di canto.',
+    vr_phys_perf_desc:'La gamma fisiologica include tutto ciò che puoi tecnicamente produrre. Quella esecutiva è ciò che suona musicale in modo affidabile. Il centro esecutivo predice il tipo vocale con il 97,8% di accuratezza.',
+    vr_voice_map:'Mappa Tipi Vocali', vr_discover_artists:'Artisti',
+    vr_ranges_bands:'Estensioni · band', vr_all_types:'Tutti i Tipi',
+    vr_inc_specialist:'Inc. specialisti', vr_key_concepts:'Concetti Chiave',
+    vr_tessitura:'Tessitura', vr_passaggio:'Passaggio',
+    vr_phys_vs_perf:'Gamma Fisiologica vs. Esecutiva',
+    vr_all_types_check:'Tutti i Tipi ✓',
     vr_artist_ref:'Artisti di Riferimento',
     // Other JS dynamic strings
     label_beats_per_bar:'BATTITI PER MISURA',
@@ -20985,6 +21003,21 @@ function setLang(lang) {
   try { dkBuildPresetCategoryTabs && dkBuildPresetCategoryTabs(); } catch(e) {}
   try { progRenderModal && progRenderModal(); } catch(e) {}
   try { scaleRenderNotes && scaleRenderNotes(); } catch(e) {}
+  try { buildTcScaleDropdown && buildTcScaleDropdown(); } catch(e) {}
+  try { tcInit && tcInit(); } catch(e) {}
+  try { chordInit && chordInit(); } catch(e) {}
+  try { scalesInit && scalesInit(); } catch(e) {}
+  try { dkInit && dkInit(); } catch(e) {}
+  try { buildPianoFullToneBank && buildPianoFullToneBank(); } catch(e) {}
+  try { buildExerciseToneBank && buildExerciseToneBank('scaleToneBank'); } catch(e) {}
+  // Re-render VR artist modal if currently open
+  try {
+    const vrModal = document.getElementById('vrArtistModal');
+    if (vrModal && vrModal.classList.contains('open')) {
+      vrRenderArtistModalBody(vrModal._filterId || null);
+    }
+  } catch(e) {}
+  try { vrRenderReference && vrRenderReference(); } catch(e) {}
   const tooltipText = document.getElementById('tooltipText');
   if (tooltipText && tooltipText.parentElement.classList.contains('silent')) {
     tooltipText.textContent = t('tooltip_play');
@@ -22292,36 +22325,36 @@ const VR_STAB_WINDOW = 1.2; // semitones
 const VR_TESS_MS = 15000;
 
 const VR_VOICE_TYPES = [
-  { id:'bass',     name:'Bass',          gender:'male',   lowMidi:40, highMidi:64, tessCenter:52, color:'#4169e1', timbre:'Deep · dark · round',        singers:['Johnny Cash','Barry White','Leonard Cohen','Tom Waits'],          desc:'The lowest standard male voice. Rich, dark resonance that anchors harmony. True basses are rarer than most think — many who identify as bass are actually bass-baritones.' },
-  { id:'baritone', name:'Baritone',      gender:'male',   lowMidi:45, highMidi:69, tessCenter:57, color:'#6495ed', timbre:'Warm · full · versatile',     singers:['Frank Sinatra','Elvis Presley','David Bowie','Jim Morrison'],     desc:'The most common male voice type. Warm, full tone that suits lyrical and dramatic singing across virtually every genre. Most male pop and rock singers are baritones.' },
-  { id:'tenor',    name:'Tenor',         gender:'male',   lowMidi:48, highMidi:72, tessCenter:60, color:'#34d399', timbre:'Bright · clear · powerful',   singers:['Michael Jackson','Stevie Wonder','Andrea Bocelli','Bruno Mars'], desc:'The highest standard male voice. Carries the melody in choral and operatic writing. The most common lead vocal range in pop and rock.' },
-  { id:'alto',     name:'Alto',          gender:'female', lowMidi:53, highMidi:77, tessCenter:65, color:'#ffa07a', timbre:'Rich · deep · chest-forward', singers:['Nina Simone','Shirley Bassey','Adele','Cher'],                   desc:'The lowest female voice type, with a rich chest-dominant tone in the lower register. True contraltos are rare — many choir "altos" are actually mezzos singing low.' },
-  { id:'mezzo',    name:'Mezzo-Soprano', gender:'female', lowMidi:57, highMidi:81, tessCenter:69, color:'#ff8aae', timbre:'Warm · dark · versatile',     singers:['Amy Winehouse','Alicia Keys','Rihanna','Amy Lee'],               desc:'The middle female range — the most common female voice type — with a darker timbre than soprano but more agility and extension than alto.' },
-  { id:'soprano',  name:'Soprano',       gender:'female', lowMidi:60, highMidi:84, tessCenter:72, color:'#b8a3ff', timbre:'Bright · clear · soaring',    singers:["Beyoncé",'Mariah Carey','Ariana Grande','Hayley Williams'],      desc:'The highest standard female voice type. Known for a brilliant upper register. Often the principal voice in opera and the top part in choral SATB writing.' },
+  { id:'bass',     name:'Bass',          nameIt:'Basso',             gender:'male',   lowMidi:40, highMidi:64, tessCenter:52, color:'#4169e1', timbre:'Deep · dark · round',        timbreIt:'Profondo · scuro · rotondo',      singers:['Johnny Cash','Barry White','Leonard Cohen','Tom Waits'],          desc:'The lowest standard male voice. Rich, dark resonance that anchors harmony. True basses are rarer than most think — many who identify as bass are actually bass-baritones.',                                                                                                            descIt:'La voce maschile standard più grave. Ricca, scura, il pilastro dell\'armonia. I veri bassi sono più rari di quanto si pensi — molti che si definiscono bassi sono in realtà bassi-baritoni.' },
+  { id:'baritone', name:'Baritone',      nameIt:'Baritono',          gender:'male',   lowMidi:45, highMidi:69, tessCenter:57, color:'#6495ed', timbre:'Warm · full · versatile',     timbreIt:'Caldo · pieno · versatile',       singers:['Frank Sinatra','Elvis Presley','David Bowie','Jim Morrison'],     desc:'The most common male voice type. Warm, full tone that suits lyrical and dramatic singing across virtually every genre. Most male pop and rock singers are baritones.',                                                                                                                 descIt:'La voce maschile più comune. Timbro caldo e pieno, adatto al canto lirico e drammatico in quasi ogni genere. La maggior parte dei cantanti maschi pop e rock è baritonale.' },
+  { id:'tenor',    name:'Tenor',         nameIt:'Tenore',            gender:'male',   lowMidi:48, highMidi:72, tessCenter:60, color:'#34d399', timbre:'Bright · clear · powerful',   timbreIt:'Luminoso · chiaro · potente',     singers:['Michael Jackson','Stevie Wonder','Andrea Bocelli','Bruno Mars'], desc:'The highest standard male voice. Carries the melody in choral and operatic writing. The most common lead vocal range in pop and rock.',                                                                                                                                             descIt:'La voce maschile standard più acuta. Porta la melodia nella scrittura corale e operistica. L\'estensione vocale solistica più comune nel pop e nel rock.' },
+  { id:'alto',     name:'Alto',          nameIt:'Contralto',         gender:'female', lowMidi:53, highMidi:77, tessCenter:65, color:'#ffa07a', timbre:'Rich · deep · chest-forward', timbreIt:'Ricco · profondo · di petto',     singers:['Nina Simone','Shirley Bassey','Adele','Cher'],                   desc:'The lowest female voice type, with a rich chest-dominant tone in the lower register. True contraltos are rare — many choir "altos" are actually mezzos singing low.',                                                                                                                descIt:'La voce femminile più grave, con un timbro ricco e dominante di petto nel registro basso. I veri contralti sono rari — molte "contralto" corali sono in realtà mezzosoprani che cantano in basso.' },
+  { id:'mezzo',    name:'Mezzo-Soprano', nameIt:'Mezzosoprano',      gender:'female', lowMidi:57, highMidi:81, tessCenter:69, color:'#ff8aae', timbre:'Warm · dark · versatile',     timbreIt:'Caldo · scuro · versatile',       singers:['Amy Winehouse','Alicia Keys','Rihanna','Amy Lee'],               desc:'The middle female range — the most common female voice type — with a darker timbre than soprano but more agility and extension than alto.',                                                                                                                                          descIt:"L'estensione femminile media — la voce femminile più comune — con un timbro più scuro del soprano ma maggiore agilità e estensione rispetto al contralto." },
+  { id:'soprano',  name:'Soprano',       nameIt:'Soprano',           gender:'female', lowMidi:60, highMidi:84, tessCenter:72, color:'#b8a3ff', timbre:'Bright · clear · soaring',    timbreIt:'Luminoso · chiaro · brillante',   singers:["Beyoncé",'Mariah Carey','Ariana Grande','Hayley Williams'],      desc:'The highest standard female voice type. Known for a brilliant upper register. Often the principal voice in opera and the top part in choral SATB writing.',                                                                                                                          descIt:"La voce femminile standard più acuta. Nota per il registro superiore brillante. Spesso la voce principale nell'opera e la parte più alta nella scrittura corale SATB." },
 ];
 
 // Extended / specialist voice types — toggled in the Reference section
 const VR_EXTENDED_TYPES = [
   {
-    id:'basso-profondo', name:'Basso Profondo', gender:'male',
+    id:'basso-profondo', nameIt:'Basso Profondo', name:'Basso Profondo', nameIt:'Basso Profondo', gender:'male',
     lowMidi:36, highMidi:52, tessCenter:44, color:'#1e40af',
-    timbre:'Subterranean · thunderous · rare',
+    timbre:'Subterranean · thunderous · rare', timbreIt:'Sotterraneo · tonante · rarissimo',
     singers:['Feodor Chaliapin','René Pape','Tim Storms','Boris Christoff'],
-    desc:"The deepest male voice — and arguably the rarest voice type of all. Capable of pitches below the conventional bass range. Prized in Russian Orthodox choral music and Wagnerian opera. Tim Storms holds the Guinness record for the lowest note ever sung.",
+    desc:"The deepest male voice — and arguably the rarest voice type of all. Capable of pitches below the conventional bass range. Prized in Russian Orthodox choral music and Wagnerian opera. Tim Storms holds the Guinness record for the lowest note ever sung.", descIt:'La voce maschile più profonda — e probabilmente il tipo di voce più raro. Capace di note al di sotto del range del basso convenzionale. Preziosa nella musica corale ortodossa russa e nell\'opera wagneriana.',
   },
   {
-    id:'countertenor', name:'Countertenor', gender:'male',
+    id:'countertenor', name:'Countertenor', nameIt:'Controtenore', gender:'male',
     lowMidi:52, highMidi:77, tessCenter:64, color:'#0ea5e9',
-    timbre:'Light · agile · ethereal',
+    timbre:'Light · agile · ethereal', timbreIt:'Leggero · agile · etereo',
     singers:['Andreas Scholl','Philippe Jaroussky','Alfred Deller','Iestyn Davies'],
-    desc:'The highest standard male voice, performed primarily in falsetto register. Countertenors took on roles originally written for castrati in Baroque opera. The range overlaps significantly with the alto — the same notes, but completely different timbres.',
+    desc:'The highest standard male voice, performed primarily in falsetto register. Countertenors took on roles originally written for castrati in Baroque opera. The range overlaps significantly with the alto — the same notes, but completely different timbres.', descIt:'La voce maschile standard più acuta, eseguita principalmente in falsetto. I controtenori hanno assunto ruoli originariamente scritti per castrati nell\'opera barocca.',
   },
   {
-    id:'coloratura', name:'Coloratura Soprano', gender:'female',
+    id:'coloratura', name:'Coloratura Soprano', nameIt:'Soprano di Coloratura', gender:'female',
     lowMidi:57, highMidi:91, tessCenter:76, color:'#d946ef',
-    timbre:'Brilliant · agile · acrobatic',
+    timbre:'Brilliant · agile · acrobatic', timbreIt:'Brillante · agile · acrobatico',
     singers:['Diana Damrau','Joan Sutherland','Beverly Sills','Natalie Dessay'],
-    desc:"A soprano sub-type defined by exceptional agility for rapid runs, trills, and leaps as much as by range. Mozart's Queen of the Night aria reaches F6 — territory only coloraturas can inhabit reliably.",
+    desc:"A soprano sub-type defined by exceptional agility for rapid runs, trills, and leaps as much as by range. Mozart', descIt:'Un sottotipo di soprano definito da un\'eccezionale agilità per passaggi rapidi, trilli e salti. La Regina della Notte di Mozart raggiunge il Fa6.'s Queen of the Night aria reaches F6 — territory only coloraturas can inhabit reliably.",
   },
 ];
 
@@ -22337,7 +22370,7 @@ const VR_SATB_IDS = new Set(['bass', 'tenor', 'alto', 'soprano']);
 // ─────────────────────────────────────────────
 
 const VR_ARTIST_REFERENCE = [
-  { id:'bass', name:'Bass', color:'#4169e1', artists:[
+  { id:'bass', name:'Bass', nameIt:'Basso', color:'#4169e1', artists:[
     { name:'Johnny Cash',    project:null,                         range:'C2–A4',   genre:'Country · Rock',            known:"Ring of Fire · Hurt · Man in Black · I Walk the Line" },
     { name:'Barry White',    project:null,                         range:'E2–D5',   genre:'Soul · R&B',                known:"Can't Get Enough of Your Love, Babe · Never, Never Gonna Give Ya Up" },
     { name:'Leonard Cohen',  project:null,                         range:null,      genre:'Folk · Singer-songwriter',  known:"Hallelujah · Suzanne · Bird on the Wire · Everybody Knows" },
@@ -22351,7 +22384,7 @@ const VR_ARTIST_REFERENCE = [
     { name:'Peter Steele',   project:'Type O Negative',           range:'B1–G4',   genre:'Metal',                     known:"Black No. 1 · Christian Woman · October Rust" },
     { name:'Mark Lanegan',   project:'Screaming Trees',           range:null,      genre:'Grunge · Blues rock',       known:"One Way Street · Harborview Hospital — haunting bass-baritone" },
   ]},
-  { id:'baritone', name:'Baritone', color:'#6495ed', artists:[
+  { id:'baritone', name:'Baritone', nameIt:'Baritono', color:'#6495ed', artists:[
     { name:'Frank Sinatra',  project:null,                  range:'C2–C5',  genre:'Jazz · Big Band · Swing',   known:"My Way · New York, New York · Fly Me to the Moon · The Way You Look Tonight" },
     { name:'Elvis Presley',  project:null,                  range:'E2–B4',  genre:'Rock & Roll · Country',     known:"Hound Dog · Love Me Tender · Suspicious Minds · In the Ghetto" },
     { name:'David Bowie',    project:null,                  range:'C#2–F5', genre:'Rock · Glam · Art rock',    known:"Heroes · Space Oddity · Life on Mars · Ziggy Stardust · Let's Dance" },
@@ -22371,7 +22404,7 @@ const VR_ARTIST_REFERENCE = [
     { name:'Morrissey',      project:'The Smiths',          range:null,     genre:'Indie · Alternative rock',  known:"This Charming Man · There Is a Light That Never Goes Out · How Soon Is Now" },
     { name:'Ian Curtis',     project:'Joy Division',        range:null,     genre:'Post-punk',                 known:"Love Will Tear Us Apart · Atmosphere · She's Lost Control" },
   ]},
-  { id:'tenor', name:'Tenor', color:'#34d399', artists:[
+  { id:'tenor', name:'Tenor', nameIt:'Tenore', color:'#34d399', artists:[
     { name:'Michael Jackson', project:'The Jackson 5', range:'A2–F5',  genre:'Pop · R&B · Dance',          known:"Thriller · Billie Jean · Man in the Mirror · Beat It" },
     { name:'Stevie Wonder',   project:null,                  range:'F2–C6',  genre:'Soul · R&B · Funk',            known:"Superstition · Isn't She Lovely · Higher Ground · Sir Duke" },
     { name:'Robert Plant',    project:'Led Zeppelin',        range:'E2–C6',  genre:'Rock · Hard rock · Blues',     known:"Stairway to Heaven · Whole Lotta Love · Kashmir — extraordinary high tenor" },
@@ -22390,7 +22423,7 @@ const VR_ARTIST_REFERENCE = [
     { name:'Chris Martin',    project:'Coldplay',            range:'C2–F5',  genre:'Alternative rock',             known:"The Scientist · Fix You · Yellow · Clocks · The Scientist" },
     { name:'Ed Sheeran',      project:null,                  range:'B2–C5',  genre:'Pop · Folk',                   known:"The A Team · Shape of You · Perfect · Castle on the Hill" },
   ]},
-  { id:'alto', name:'Alto / Contralto', color:'#ffa07a', artists:[
+  { id:'alto', name:'Alto / Contralto', nameIt:'Contralto', color:'#ffa07a', artists:[
     { name:'Nina Simone',     project:null,                              range:'G2–Bb5', genre:'Jazz · Soul · Blues · Gospel', known:"Feeling Good · I Put a Spell on You · Ne Me Quitte Pas · Mississippi Goddam" },
     { name:'Janis Joplin',    project:'Big Brother and the Holding Company', range:'Eb3–A5', genre:'Blues rock · Soul',  known:"Piece of My Heart · Me and Bobby McGee · Cry Baby · Summertime — raw power alto" },
     { name:'Shirley Bassey',  project:null,                              range:'C3–G5',  genre:'Pop · Cabaret · Bond themes', known:"Goldfinger · Big Spender · Diamonds Are Forever · History Repeating" },
@@ -22407,7 +22440,7 @@ const VR_ARTIST_REFERENCE = [
     { name:'PJ Harvey',       project:null,                      range:null,     genre:'Alternative · Indie rock',    known:"Stories from the City, Stories from the Sea · Let England Shake · To Bring You My Love" },
     { name:'Alison Mosshart', project:'The Kills · The Dead Weather', range:null, genre:'Garage rock · Blues rock', known:"The Kills — Midnight Boom · Blood Pressures · The Dead Weather — Hang You from the Heavens" },
   ]},
-  { id:'mezzo', name:'Mezzo-Soprano', color:'#ff8aae', artists:[
+  { id:'mezzo', name:'Mezzo-Soprano', nameIt:'Mezzosoprano', color:'#ff8aae', artists:[
     { name:'Amy Winehouse',    project:null,                 range:'D3–D6',  genre:'Soul · Jazz · R&B',       known:"Rehab · Back to Black · Valerie · Tears Dry on Their Own · Love Is a Losing Game" },
     { name:'Alicia Keys',      project:null,                 range:'B2–G5',  genre:'R&B · Neo-soul · Pop',    known:"Fallin' · If I Ain't Got You · No One · Girl on Fire · Empire State of Mind" },
     { name:'Alanis Morissette',project:null,                 range:'D3–E5',  genre:'Alternative rock · Pop',  known:"Jagged Little Pill — You Oughta Know · Ironic · Hand in My Pocket" },
@@ -22425,7 +22458,7 @@ const VR_ARTIST_REFERENCE = [
     { name:'Sara Bareilles',   project:null,                 range:'C3–D6',  genre:'Pop · Piano pop',         known:"Love Song · Brave · Gravity · She Used to Be Mine · King of Anything" },
 
   ]},
-  { id:'soprano', name:'Soprano', color:'#b8a3ff', artists:[
+  { id:'soprano', name:'Soprano', nameIt:'Soprano', color:'#b8a3ff', artists:[
     { name:'Beyoncé',           project:"Destiny's Child",    range:'A2–E6',  genre:'Pop · R&B · Soul',           known:"Crazy in Love · Halo · Lemonade · Drunk in Love · Formation — soprano by tessitura and upper extension; mezzo-weight in the lower register" },
     { name:'Mariah Carey',      project:null,                 range:'F2–G7',  genre:'Pop · R&B · Gospel',         known:"Hero · We Belong Together · All I Want for Christmas · Emotions — whistle register (★)" },
     { name:'Ariana Grande',     project:null,                 range:'D3–E7',  genre:'Pop · R&B',                  known:"Thank U, Next · Problem · God is a Woman · 7 rings — whistle register (★)" },
@@ -22440,7 +22473,7 @@ const VR_ARTIST_REFERENCE = [
     { name:'Leona Lewis',       project:null,                 range:'D3–G5',  genre:'Pop · Soul',                 known:"Bleeding Love · Run · Footprints in the Sand — stratospheric upper range" },
     { name:'Renée Fleming',     project:null,                 range:'D3–F6',  genre:'Opera',                      known:"Handel · R. Strauss — Der Rosenkavalier — leading lyric soprano of her generation" },
   ]},
-  { id:'countertenor', name:'Countertenor', color:'#0ea5e9', artists:[
+  { id:'countertenor', name:'Countertenor', nameIt:'Controtenore', color:'#0ea5e9', artists:[
     { name:'Andreas Scholl',        project:null, range:'G3–E5', genre:'Baroque · Oratorio',    known:"Handel — Giulio Cesare · Messiah · Vivaldi — the most widely recorded living countertenor" },
     { name:'Philippe Jaroussky',    project:null, range:'G3–F5', genre:'Baroque · Early music', known:"Vivaldi · Handel · Caldara — extraordinary agility and tonal beauty" },
     { name:'Alfred Deller',         project:null, range:'F3–D5', genre:'Early music · Baroque', known:"Purcell — Music for a While · The Fairy Queen — credited with reviving the countertenor" },
@@ -22460,7 +22493,7 @@ const VR_ARTIST_REFERENCE = [
     { name:'Matti Salminen',    project:null, range:null,     genre:'Opera',                     known:"Wagner — Hagen · Hunding · Fafner — towering Finnish bass" },
     { name:'Paata Burchuladze', project:null, range:null,     genre:'Opera',                     known:"Verdi · Wagner · Mussorgsky — one of the great Georgian operatic voices" },
   ]},
-  { id:'coloratura', name:'Coloratura Soprano', color:'#d946ef', artists:[
+  { id:'coloratura', name:'Coloratura Soprano', nameIt:'Soprano di Coloratura', color:'#d946ef', artists:[
     { name:'Diana Damrau',    project:null, range:'C4–F6',  genre:'Opera',              known:"Queen of the Night (Magic Flute) · Lucia di Lammermoor — current standard-bearer" },
     { name:'Joan Sutherland', project:null, range:'B3–E6',  genre:'Opera',              known:"'La Stupenda' — Lucia · Norma · La Traviata — one of the most celebrated coloraturas" },
     { name:'Beverly Sills',   project:null, range:'Bb3–F6', genre:'Opera',              known:"'Bubbles' — Donizetti · Bellini · Rossini — transformed American opera in the 1970s" },
@@ -23341,11 +23374,11 @@ function vrRenderResults(r) {
     const rangeEl = document.getElementById('vrRangeVal');
     const glowEl  = document.getElementById('vrResGlow');
     if (nameEl) {
-      nameEl.textContent = vt.name.toUpperCase();
+      nameEl.textContent = ((progState.lang === 'it')&&vt.nameIt?vt.nameIt:vt.name).toUpperCase();
       nameEl.style.cssText = `background:linear-gradient(135deg,${vt.color},#ffffff88);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 18px ${vt.color}88);`;
       nameEl.classList.add('show');
     }
-    if (timbreEl) { timbreEl.textContent = vt.timbre; timbreEl.classList.add('show'); }
+    if (timbreEl) { timbreEl.textContent = ((progState.lang === 'it')&&vt.timbreIt)?vt.timbreIt:vt.timbre; timbreEl.classList.add('show'); }
     if (rangeEl)  rangeEl.classList.add('show');
     if (glowEl)   { glowEl.style.background = `radial-gradient(ellipse 80% 55% at 50% 0%,${vt.color}20,transparent 70%)`; glowEl.classList.add('show'); }
   }, 80);
@@ -23537,14 +23570,14 @@ function vrRenderReference() {
 
   // Strip first — it's the orienting overview
   let html = `<div class="vr-strip-wrap" style="margin-bottom:10px;">
-    <div class="vr-strip-title">Voice Type Map</div>
+    <div class="vr-strip-title">${t('vr_voice_map')}</div>
     <div style="position:relative;padding-left:66px;">`;
 
   allTypes.forEach(vt => {
     const lP = pct(vt.lowMidi), wP = pct(vt.highMidi) - lP;
     const isExt = VR_EXTENDED_TYPES.some(e => e.id === vt.id);
     html += `<div class="vr-lane" style="${isExt ? 'opacity:0.75' : ''}">
-      <div class="vr-lane-label" style="color:${vt.color};${isExt ? 'font-style:italic' : ''}">${vt.name.split(' ')[0]}</div>
+      <div class="vr-lane-label" style="color:${vt.color};${isExt ? 'font-style:italic' : ''}">${((progState.lang === 'it')&&vt.nameIt?vt.nameIt:vt.name).split(' ')[0]}</div>
       <div class="vr-lane-bg" style="left:${lP}%;width:${wP}%;background:${vt.color};opacity:${isExt ? '0.18' : '0.25'};${isExt ? 'border:1px dashed '+vt.color+'66' : ''}"></div>
       <div class="vr-lane-note">${vrMidiToName(vt.lowMidi)}–${vrMidiToName(vt.highMidi)}</div>
     </div>`;
@@ -23566,15 +23599,15 @@ function vrRenderReference() {
   html += `<div style="display:flex;gap:8px;margin-bottom:10px;">
     <div onclick="vrOpenArtistReference()" style="flex:1;display:flex;align-items:center;justify-content:space-between;padding:11px 13px;background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--r-md);cursor:pointer;transition:border-color 0.2s;gap:8px;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border-soft)'">
       <div>
-        <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:2px;">Artists</div>
-        <div style="font-size:10px;color:var(--muted);">Ranges · bands</div>
+        <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:2px;">${t('vr_discover_artists')}</div>
+        <div style="font-size:10px;color:var(--muted);">${t('vr_ranges_bands')} · bands</div>
       </div>
       <div style="font-size:14px;color:var(--accent);opacity:0.6;">→</div>
     </div>
     <div onclick="vrToggleExtended()" style="flex:1;display:flex;align-items:center;justify-content:space-between;padding:11px 13px;background:var(--panel);border:1px solid ${vrShowExtended ? 'var(--accent)' : 'var(--border-soft)'};border-radius:var(--r-md);cursor:pointer;transition:border-color 0.2s;gap:8px;">
       <div>
-        <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:${vrShowExtended ? 'var(--accent)' : 'var(--text-dim)'};font-weight:600;margin-bottom:2px;">${vrShowExtended ? 'All Types ✓' : 'All Types'}</div>
-        <div style="font-size:10px;color:var(--muted);">Inc. specialist</div>
+        <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:${vrShowExtended ? 'var(--accent)' : 'var(--text-dim)'};font-weight:600;margin-bottom:2px;">${vrShowExtended ? t('vr_all_types_check') : t('vr_all_types')}</div>
+        <div style="font-size:10px;color:var(--muted);">${t('vr_inc_specialist')}</div>
       </div>
       <div style="font-size:16px;color:${vrShowExtended ? 'var(--accent)' : 'var(--muted)'};transition:transform 0.3s;${vrShowExtended ? 'transform:rotate(45deg)' : ''}">+</div>
     </div>
@@ -23597,26 +23630,25 @@ function vrRenderReference() {
   conceptsDiv.className = 'card';
   conceptsDiv.style.marginTop = '4px';
   conceptsDiv.innerHTML = `<div class="card-glow"></div>
-    <div class="card-label">Key concepts</div>
+    <div class="card-label">${t('vr_key_concepts')}</div>
     <div style="display:flex;flex-direction:column;gap:12px;">
       <div>
-        <div style="font-size:9.5px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:4px;font-weight:600;">Tessitura</div>
-        <div style="font-size:11.5px;color:var(--text-dim);line-height:1.65;">The sweet spot of your voice — where your tone is most resonant, effortless, and sustainable. Professional classification is based primarily on tessitura center, not extreme notes.</div>
+        <div style="font-size:9.5px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:4px;font-weight:600;">${t('vr_tessitura')}</div>
+        <div style="font-size:11.5px;color:var(--text-dim);line-height:1.65;">${t('vr_tessitura_desc')}</div>
       </div>
       <div style="height:1px;background:var(--border-soft)"></div>
       <div>
-        <div style="font-size:9.5px;letter-spacing:2px;text-transform:uppercase;color:var(--accent-warm);margin-bottom:4px;font-weight:600;">Passaggio</div>
-        <div style="font-size:11.5px;color:var(--text-dim);line-height:1.65;">The register break — where your voice transitions from chest to head voice. Its location is a key diagnostic tool for vocal coaches when classifying voice type.</div>
+        <div style="font-size:9.5px;letter-spacing:2px;text-transform:uppercase;color:var(--accent-warm);margin-bottom:4px;font-weight:600;">${t('vr_passaggio')}</div>
+        <div style="font-size:11.5px;color:var(--text-dim);line-height:1.65;">${t('vr_passaggio_desc')}</div>
       </div>
       <div style="height:1px;background:var(--border-soft)"></div>
       <div>
-        <div style="font-size:9.5px;letter-spacing:2px;text-transform:uppercase;color:var(--accent-soft);margin-bottom:4px;font-weight:600;">Physiological vs. Performing Range</div>
-        <div style="font-size:11.5px;color:var(--text-dim);line-height:1.65;">Your physiological range is everything you can technically produce. Your performing range is what sounds musical reliably. The performing center predicts voice type with 97.8% accuracy — the extremes predict it at just 60%.</div>
+        <div style="font-size:9.5px;letter-spacing:2px;text-transform:uppercase;color:var(--accent-soft);margin-bottom:4px;font-weight:600;">${t('vr_phys_vs_perf')}</div>
+        <div style="font-size:11.5px;color:var(--text-dim);line-height:1.65;">${t('vr_phys_perf_desc')}</div>
       </div>
     </div>`;
   el.appendChild(conceptsDiv);
 }
-
 function vrAppendRefCard(container, vt, pctFn, isExt) {
   const lP = pctFn(vt.lowMidi), wP = pctFn(vt.highMidi) - lP;
   const div = document.createElement('div');
@@ -23629,7 +23661,7 @@ function vrAppendRefCard(container, vt, pctFn, isExt) {
     <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent 5%,${vt.color}88 50%,transparent 95%);"></div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
       <div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;color:${vt.color};">${vt.name}</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;color:${vt.color};">${(progState.lang === 'it')&&vt.nameIt?vt.nameIt:vt.name}</div>
         <div style="font-size:9.5px;letter-spacing:1.5px;color:var(--text-dim);font-variant-numeric:tabular-nums;">${vrMidiToName(vt.lowMidi)} – ${vrMidiToName(vt.highMidi)} · ${vrOctaveSpan(vt.lowMidi,vt.highMidi)}</div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
@@ -23641,12 +23673,12 @@ function vrAppendRefCard(container, vt, pctFn, isExt) {
       <div style="position:absolute;left:${lP}%;width:${wP}%;height:100%;background:${vt.color};opacity:0.65;border-radius:3px;${isExt ? 'border:1px dashed '+vt.color+'88' : ''}"></div>
     </div>
     <div class="vr-ref-card-body">
-      <div style="font-size:11.5px;color:var(--text-dim);line-height:1.65;margin-bottom:10px;">${vt.desc}</div>
+      <div style="font-size:11.5px;color:var(--text-dim);line-height:1.65;margin-bottom:10px;">${(progState.lang === 'it')&&vt.descIt?vt.descIt:vt.desc}</div>
       <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Timbre</div>
-      <div style="font-size:11px;color:${vt.color};margin-bottom:10px;">${vt.timbre}</div>
+      <div style="font-size:11px;color:${vt.color};margin-bottom:10px;">${(progState.lang === 'it')&&vt.timbreIt?vt.timbreIt:vt.timbre}</div>
       <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Notable singers</div>
       <div>${vt.singers.map(s=>`<span class="vr-singer-chip" style="border-color:${vt.color}33">${s}</span>`).join('')}</div>
-      <button onclick="event.stopPropagation();vrOpenArtistReference('${vt.id}')" style="margin-top:12px;width:100%;padding:9px;background:transparent;border:1px solid ${vt.color}44;border-radius:var(--r-sm);color:${vt.color};font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='${vt.color}12'" onmouseout="this.style.background='transparent'">All ${vt.name.split(' ')[0]} Artists →</button>
+      <button onclick="event.stopPropagation();vrOpenArtistReference('${vt.id}')" style="margin-top:12px;width:100%;padding:9px;background:transparent;border:1px solid ${vt.color}44;border-radius:var(--r-sm);color:${vt.color};font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='${vt.color}12'" onmouseout="this.style.background='transparent'">All ${((progState.lang === 'it')&&vt.nameIt?vt.nameIt:vt.name).split(' ')[0]} Artists →</button>
     </div>`;
   container.appendChild(div);
 }
@@ -23664,6 +23696,24 @@ function vrToggleExtended() {
 // ─────────────────────────────────────────────
 // VR ARTIST REFERENCE MODAL
 // ─────────────────────────────────────────────
+
+
+function vrTranslateGenre(genre) {
+  if (progState.lang !== 'it') return genre;
+  const map = {"Country": "Country", "Rock": "Rock", "Pop": "Pop", "Jazz": "Jazz", "Soul": "Soul", "R&B": "R&B", "Blues": "Blues", "Folk": "Folk", "Singer-songwriter": "Cantautore", "Experimental": "Sperimentale", "Post-punk": "Post-punk", "Dark folk": "Folk oscuro", "Alternative": "Alternative", "Indie": "Indie", "Electronic": "Elettronica", "Classical": "Classica", "Opera": "Opera", "Baroque": "Barocco", "Gospel": "Gospel", "Funk": "Funk", "Hip-hop": "Hip-hop", "Reggae": "Reggae", "Latin": "Latin", "Bossa Nova": "Bossa Nova", "New wave": "New wave", "Psychedelic": "Psichedelico", "Motown": "Motown", "Disco": "Disco", "Heavy metal": "Heavy metal"};
+  return genre.split(' · ').map(g => map[g] || g).join(' · ');
+}
+
+function vrTranslateNote(known) {
+  if (progState.lang !== 'it') return known;
+  const sep = ' — ';
+  const dashIdx = known.lastIndexOf(sep);
+  if (dashIdx < 0) return known;
+  const songs = known.slice(0, dashIdx);
+  const note  = known.slice(dashIdx + sep.length);
+  const noteMap = {"4-octave high baritone": "baritono acuto su 4 ottave", "also a major 1960s crossover star": "anche una grande star crossover degli anni '60", "brought the voice to a new mainstream audience": "ha portato la voce a un nuovo pubblico mainstream", "celebrated for subterranean lows": "celebre per i bassi sotterranei", "chameleon baritone": "baritono camaleonte", "commanding physical and vocal presence": "presenza fisica e vocale imponente", "credited with reviving the countertenor": "accreditato per aver fatto rivivere il controtenore", "current standard-bearer": "attuale punto di riferimento assoluto", "deep baritone with exceptional range": "baritono profondo con estensione eccezionale", "defining bass of the 20th century": "basso di riferimento del XX secolo", "defining operatic tenor of the 20th century": "tenore lirico di riferimento del XX secolo", "defining soprano of the 20th century": "soprano di riferimento del XX secolo", "dramatic intensity alongside technique": "intensità drammatica abbinata alla tecnica", "extraordinary agility and tonal beauty": "agilità straordinaria e bellezza timbrica", "extraordinary high tenor": "tenore acuto straordinario", "extraordinary lightness and purity of tone": "leggerezza e purezza del timbro straordinarie", "haunting bass-baritone": "basso-baritono avvolgente", "leading American countertenor of his era": "principale controtenore americano della sua epoca", "leading lyric soprano of her generation": "principale soprano lirico della sua generazione", "lowest note ever sung (G−7, 0.189 Hz) and widest vocal range": "nota più bassa mai cantata (Sol−7, 0,189 Hz) e massima estensione vocale", "lyric baritone with tenor extension": "baritono lirico con estensione da tenore", "noted for a warm, natural tone": "apprezzato per il timbro caldo e naturale", "one of grunge's most distinctive voices": "una delle voci più distintive del grunge", "one of the 20th century's great bass voices": "una delle grandi voci di basso del XX secolo", "one of the great Georgian operatic voices": "una delle grandi voci operistiche georgiane", "one of the most celebrated coloraturas": "una delle colorature più celebrate", "one of the most celebrated interpretations": "una delle interpretazioni più celebrate", "one of the most precisely agile voices on record": "una delle voci più precisamente agili mai registrate", "pioneered the classical crossover genre": "pioniera del genere classical crossover", "praised for natural tone purity": "apprezzata per la purezza naturale del timbro", "raw blues baritone": "baritono blues grezzo", "raw power alto": "contralto dalla potenza grezza", "soprano by tessitura and upper extension; mezzo-weight in the lower register": "soprano per tessitura ed estensione acuta; peso di mezzosoprano nel registro basso", "stratospheric upper range": "registro acuto stratosferico", "the definitive coloratura soprano of the late 20th century": "la coloratura soprano di riferimento del tardo XX secolo", "the definitive interpretation of the role": "l'interpretazione definitiva del ruolo", "the leading basso profondo of his generation": "il principale basso profondo della sua generazione", "the most widely recorded living countertenor": "il controtenore vivente più inciso al mondo", "towering Finnish bass": "imponente basso finlandese", "transformed American opera in the 1970s": "ha trasformato l'opera americana negli anni '70", "uncommonly expressive lower range": "registro basso di rara espressività", "warm, languid baritone": "baritono caldo e languido", "whistle register (★)": "registro di fischio (★)", "widely praised for richness and projection": "molto apprezzato per ricchezza e proiezione", "worked directly with Benjamin Britten": "ha lavorato direttamente con Benjamin Britten", "Magic Flute · one of the great German basses of the 20th century": "Flauto Magico · uno dei grandi bassi tedeschi del XX secolo"};
+  return songs + sep + (noteMap[note] || note);
+}
 
 function vrOpenArtistReference(filterId = null) {
   let overlay = document.getElementById('vrArtistModal');
@@ -23689,7 +23739,7 @@ function vrOpenArtistReference(filterId = null) {
   if (titleEl) {
     if (filterId) {
       const section = VR_ARTIST_REFERENCE.find(s => s.id === filterId);
-      titleEl.textContent = section ? section.name + ' — ' + t('vr_artist_ref') : t('vr_artist_ref');
+      titleEl.textContent = section ? ((progState.lang === 'it')&&section.nameIt?section.nameIt:section.name) + ' — ' + t('vr_artist_ref') : t('vr_artist_ref');
     } else {
       titleEl.textContent = t('vr_all_artists');
     }
@@ -23725,20 +23775,20 @@ function vrRenderArtistModalBody(filterId = null) {
     return `
       <div class="vr-modal-section">
         <div class="vr-modal-section-header">
-          <div class="vr-modal-section-name" style="color:${section.color}">${section.name}</div>
+          <div class="vr-modal-section-name" style="color:${section.color}">${(progState.lang === 'it')&&section.nameIt?section.nameIt:section.name}</div>
           <div class="vr-modal-section-range">${rangeStr}</div>
         </div>
         ${section.artists.map(a => `
           <div class="vr-modal-artist">
             <div class="vr-modal-artist-top">
               <div class="vr-modal-artist-name">${a.name}</div>
-              <div class="vr-modal-artist-genre">${a.genre}</div>
+              <div class="vr-modal-artist-genre">${(progState.lang === 'it')?vrTranslateGenre(a.genre):a.genre}</div>
             </div>
             ${(a.project || a.range) ? `<div style="display:flex;gap:8px;align-items:center;margin:3px 0 2px;flex-wrap:wrap;">
               ${a.project ? `<span style="font-size:8.5px;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;background:${section.color}18;border:1px solid ${section.color}33;border-radius:10px;color:${section.color};opacity:0.85">${a.project}</span>` : ''}
               ${a.range  ? `<span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:0.5px;">${a.range}</span>` : ''}
             </div>` : ''}
-            <div class="vr-modal-artist-known">${a.known}</div>
+            <div class="vr-modal-artist-known">${(progState.lang === 'it')?vrTranslateNote(a.known):a.known}</div>
           </div>`).join('')}
       </div>`;
   }).join('');
